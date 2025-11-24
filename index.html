@@ -20,7 +20,8 @@
         .card:hover { background-color: #2c333a; border-color: #579dff; }
         .card-label { width: 40px; height: 8px; border-radius: 4px; margin-bottom: 6px; display: block; }
         .lbl-yellow { background-color: var(--label-yellow); } .lbl-red { background-color: var(--label-red); } .lbl-green { background-color: var(--label-green); } .lbl-purple { background-color: var(--label-purple); } .lbl-orange { background-color: var(--label-orange); } .lbl-blue { background-color: var(--label-blue); } .lbl-custom { background-color: var(--label-custom); }
-        .card-title { color: #dcdfe4; font-size: 0.95rem; display: block; }
+        .card-title { color: #dcdfe4; font-size: 0.95rem; display: block; font-weight: 600;}
+        .card-desc { font-size: 0.8rem; color: #9fadbc; margin-bottom: 5px; display: block;}
         .card-footer { display: flex; gap: 10px; margin-top: 8px; font-size: 0.75rem; color: #8c9bab; }
         .icon-sm { display: inline-block; width: 14px; height: 14px; background-color: rgba(255,255,255,0.1); border-radius: 2px; }
         .add-btn { background: rgba(255,255,255,0.1); border: none; color: #9fadbc; padding: 8px; border-radius: 4px; width: 100%; cursor: pointer; margin-top: 10px; text-align: left; font-size: 0.9rem; transition: 0.2s; }
@@ -51,13 +52,21 @@
         .btn-action.btn-massive { background-color: var(--label-orange); color: #1d2125; }
         #btnStop { background-color: var(--btn-danger); color: white; font-weight: 600; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; display: none; }
         #btnStop:hover { filter: brightness(1.1); }
+        
         .modal-sidebar { flex-grow: 1; background-color: #2a2f35; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
         .sidebar-title { font-size: 0.8rem; font-weight: 600; color: #9fadbc; margin-bottom: 12px; text-transform: uppercase; flex-shrink: 0; }
-        .terminal-view { flex-grow: 1; background-color: var(--terminal-bg); border-radius: 6px; padding: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; line-height: 1.4; color: #c9d1d9; overflow-y: auto; height: 100%; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #30363d; }
+        
+        .terminal-wrapper { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--terminal-bg); border-radius: 6px; border: 1px solid #30363d; overflow: hidden; }
+        .terminal-view { flex-grow: 1; padding: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; line-height: 1.4; color: #c9d1d9; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .terminal-input-area { display: flex; border-top: 1px solid #30363d; background: #161b22; }
+        .term-prompt { color: #579dff; padding: 10px 0 10px 15px; font-family: monospace; font-weight: bold; }
+        #termInput { flex-grow: 1; background: transparent; border: none; color: #fff; padding: 10px; font-family: monospace; font-size: 0.9rem; outline: none; }
+
         .terminal-view::-webkit-scrollbar { width: 12px; }
         .terminal-view::-webkit-scrollbar-track { background: #0d1117; }
         .terminal-view::-webkit-scrollbar-thumb { background: #4a515a; border-radius: 6px; border: 2px solid #0d1117; }
         .terminal-view::-webkit-scrollbar-thumb:hover { background: #579dff; }
+        .log-string { color: #a5d6ff; } .log-key { color: #79c0ff; } .log-success { color: #7ee787; font-weight: bold; } .log-error { color: #ff7b72; font-weight: bold; } .log-info { color: #8b949e; }
         .close-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9fadbc; font-size: 1.5rem; cursor: pointer; z-index: 1001; }
     </style>
 </head>
@@ -87,8 +96,7 @@
         </div>
         <div class="list-wrapper">
             <div class="list-header">Scripts Manuais</div>
-            <div class="list-cards" id="customCardsContainer">
-                </div>
+            <div class="list-cards" id="customCardsContainer"></div>
             <button class="add-btn" onclick="openAddScriptModal()">+ Adicionar Script</button>
         </div>
     </div>
@@ -109,7 +117,13 @@
             </div>
             <div class="modal-sidebar">
                 <div class="sidebar-title">Terminal Output</div>
-                <div class="terminal-view" id="terminalOutput"><span class="log-info">// Ready.</span></div>
+                <div class="terminal-wrapper">
+                    <div class="terminal-view" id="terminalOutput"><span class="log-info">// Ready.</span></div>
+                    <div class="terminal-input-area" id="termInputArea" style="display:none;">
+                        <span class="term-prompt">$</span>
+                        <input type="text" id="termInput" placeholder="Digite e pressione Enter..." autocomplete="off">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -117,9 +131,11 @@
     <div class="modal-overlay" id="addModal">
         <div class="modal-window-small">
             <button class="close-modal" onclick="closeModal('addModal')">×</button>
-            <h2 class="modal-title">Adicionar Novo Script</h2>
-            <input type="text" class="input-trello" id="newScriptName" placeholder="Ex: busca_cep.py">
-            <button class="btn-action" onclick="addCustomCard()">Salvar Cartão</button>
+            <h2 class="modal-title">Adicionar Script</h2>
+            <input type="text" class="input-trello" id="addTitle" placeholder="Título (Ex: Busca CEP)">
+            <input type="text" class="input-trello" id="addDesc" placeholder="Descrição (Ex: Valida endereço)">
+            <input type="text" class="input-trello" id="addFile" placeholder="Arquivo (Ex: busca_cep.py)">
+            <button class="btn-action" onclick="addCustomCard()">Salvar</button>
         </div>
     </div>
 
@@ -127,95 +143,121 @@
         const BASE_URL = 'http://localhost:5000/api';
         let currentMode = '', currentScriptName = '', streamReader = null; 
 
-        // --- GERENCIAMENTO DE SCRIPTS PERSONALIZADOS ---
+        // --- LOCAL STORAGE ---
         function loadSavedScripts() {
             const container = document.getElementById('customCardsContainer');
-            const saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
+            const saved = JSON.parse(localStorage.getItem('customScriptsList') || '[]');
             container.innerHTML = '';
-            
-            saved.forEach(scriptName => {
-                createCardElement(scriptName);
-            });
+            saved.forEach(script => createCardElement(script));
         }
 
-        function createCardElement(name) {
+        function createCardElement(script) {
             const container = document.getElementById('customCardsContainer');
             const card = document.createElement('div');
             card.className = 'card';
             card.onclick = (e) => {
-                // Evita abrir modal se clicar no botão de deletar
                 if (e.target.classList.contains('delete-card-btn')) return;
-                openModal('custom', name);
+                openModal('custom', script);
             };
-            
             card.innerHTML = `
-                <span class="delete-card-btn" onclick="removeCustomCard('${name}')">✕</span>
+                <span class="delete-card-btn" onclick="removeCustomCard('${script.file}')">✕</span>
                 <span class="card-label lbl-custom"></span>
-                <span class="card-title">${name}</span>
-                <div class="card-footer"><span class="icon-sm"></span> Manual</div>
+                <span class="card-title">${script.title}</span>
+                <span class="card-desc">${script.desc}</span>
+                <div class="card-footer"><span class="icon-sm"></span> ${script.file}</div>
             `;
             container.appendChild(card);
         }
 
         function addCustomCard() {
-            const input = document.getElementById('newScriptName');
-            const name = input.value.trim();
-            if (!name.endsWith('.py')) { alert('O nome deve terminar com .py'); return; }
+            const title = document.getElementById('addTitle').value;
+            const desc = document.getElementById('addDesc').value;
+            const file = document.getElementById('addFile').value.trim();
             
-            let saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
-            if (!saved.includes(name)) {
-                saved.push(name);
-                localStorage.setItem('customScripts', JSON.stringify(saved));
-                createCardElement(name);
-            }
-            input.value = '';
+            if (!file.endsWith('.py')) { alert('Arquivo deve ser .py'); return; }
+            
+            let saved = JSON.parse(localStorage.getItem('customScriptsList') || '[]');
+            const newScript = { title, desc, file };
+            saved.push(newScript);
+            localStorage.setItem('customScriptsList', JSON.stringify(saved));
+            
+            createCardElement(newScript);
             closeModal('addModal');
+            // Limpa inputs
+            document.getElementById('addTitle').value=''; document.getElementById('addDesc').value=''; document.getElementById('addFile').value='';
         }
 
-        function removeCustomCard(name) {
-            if(!confirm(`Remover o cartão "${name}"?`)) return;
-            let saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
-            saved = saved.filter(s => s !== name);
-            localStorage.setItem('customScripts', JSON.stringify(saved));
+        function removeCustomCard(fileName) {
+            if(!confirm(`Remover?`)) return;
+            let saved = JSON.parse(localStorage.getItem('customScriptsList') || '[]');
+            saved = saved.filter(s => s.file !== fileName);
+            localStorage.setItem('customScriptsList', JSON.stringify(saved));
             loadSavedScripts();
         }
-
-        // Carrega ao iniciar
         loadSavedScripts();
 
-        // --- MODAIS E EXECUÇÃO ---
+        // --- LOGIC ---
         function openAddScriptModal() { document.getElementById('addModal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.getElementById('opModal').addEventListener('click', (e) => { if(e.target.id === 'opModal') closeModal('opModal'); });
+        document.getElementById('addModal').addEventListener('click', (e) => { if(e.target.id === 'addModal') closeModal('addModal'); });
 
-        function openModal(mode, scriptName = '') {
-            currentMode = mode; currentScriptName = scriptName;
-            const modal = document.getElementById('opModal'); const formInputs = document.getElementById('formInputs');
-            const title = document.getElementById('modalTitle'); const btn = document.getElementById('btnExecute'); 
-            const btnStop = document.getElementById('btnStop'); const term = document.getElementById('terminalOutput');
+        function openModal(mode, scriptObj = null) {
+            currentMode = mode; 
+            const modal = document.getElementById('opModal'); 
+            const formInputs = document.getElementById('formInputs');
+            const title = document.getElementById('modalTitle'); 
+            const sub = document.getElementById('modalSub');
+            const btn = document.getElementById('btnExecute'); 
+            const btnStop = document.getElementById('btnStop'); 
+            const term = document.getElementById('terminalOutput');
+            const termInputArea = document.getElementById('termInputArea');
             
             term.innerHTML = '<span class="log-info">// Conectado. Aguardando...</span>';
             document.getElementById('inpSubId').value = ''; document.getElementById('inpMsisdn').value = '';
             
-            formInputs.style.display = 'block'; document.getElementById('inpSubId').style.display = 'block'; document.getElementById('inpMsisdn').style.display = 'block';
-            btn.className = 'btn-action'; btnStop.style.display = 'none';
+            formInputs.style.display = 'block'; document.getElementById('inpSubId').style.display = 'block';
+            btn.className = 'btn-action'; btnStop.style.display = 'none'; termInputArea.style.display = 'none';
 
-            if (mode === 'insert') { title.innerText = 'Novo Cadastro PS8'; btn.innerText = 'Executar Inclusão'; }
-            else if (mode === 'delete') { title.innerText = 'Cancelamento'; document.getElementById('inpSubId').style.display = 'none'; btn.className += ' btn-delete'; btn.innerText = 'Executar Cancelamento'; }
+            if (mode === 'insert') { title.innerText = 'Novo Cadastro PS8'; sub.innerText = 'Dados para criação.'; btn.innerText = 'Executar Inclusão'; }
+            else if (mode === 'delete') { title.innerText = 'Cancelamento'; sub.innerText = 'Remover registro.'; document.getElementById('inpSubId').style.display = 'none'; btn.className += ' btn-delete'; btn.innerText = 'Executar Cancelamento'; }
             else if (mode.startsWith('sps_')) { title.innerText = 'Fluxo SPS'; document.getElementById('inpMsisdn').style.display = 'none'; btn.innerText = 'Executar'; }
-            else if (mode.endsWith('_massive')) { title.innerText = 'Execução Massiva'; formInputs.style.display = 'none'; btn.className += ' btn-massive'; btn.innerText = 'Iniciar Processamento'; }
-            else if (mode === 'custom') {
-                title.innerText = scriptName; 
-                document.getElementById('modalSub').innerText = 'Execução de script manual na raiz.';
+            else if (mode.endsWith('_massive') || mode === 'custom') {
+                // Configura para terminal
+                if(mode === 'custom') {
+                    currentScriptName = scriptObj.file;
+                    title.innerText = scriptObj.title;
+                    sub.innerText = scriptObj.desc;
+                } else {
+                    title.innerText = 'Execução Massiva';
+                    sub.innerText = 'Script automático.';
+                }
                 formInputs.style.display = 'none'; 
-                btn.className += ' btn-massive';
-                btn.innerText = 'Rodar Script';
+                btn.className += ' btn-massive'; 
+                btn.innerText = 'Iniciar';
+                termInputArea.style.display = 'flex'; // Habilita input terminal
             }
             modal.classList.add('active');
         }
 
-        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        document.getElementById('opModal').addEventListener('click', (e) => { if(e.target.id === 'opModal') closeModal('opModal'); });
-        document.getElementById('addModal').addEventListener('click', (e) => { if(e.target.id === 'addModal') closeModal('addModal'); });
-        
+        // Envio de input terminal
+        document.getElementById('termInput').addEventListener('keypress', async function (e) {
+            if (e.key === 'Enter') {
+                const val = this.value;
+                this.value = '';
+                // Mostra o que digitou no log
+                const term = document.getElementById('terminalOutput');
+                term.innerHTML += `<div><span style="color:#fff">$ ${val}</span></div>`;
+                term.scrollTop = term.scrollHeight;
+                
+                // Envia para backend
+                await fetch(`${BASE_URL}/send_input`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ input: val })
+                });
+            }
+        });
+
         function cleanANSI(text) {
             if (!text) return '';
             text = text.replace(/\u001b\[31m/g, '<span style="color:#ff7b72">').replace(/\u001b\[32m/g, '<span style="color:#7ee787">').replace(/\u001b\[33m/g, '<span style="color:#d29922">').replace(/\u001b\[34m/g, '<span style="color:#79c0ff">').replace(/\u001b\[35m/g, '<span style="color:#d2a8ff">').replace(/\u001b\[36m/g, '<span style="color:#a5d6ff">').replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">').replace(/\u001b\[1m/g, '<span style="font-weight:bold">').replace(/\u001b\[2m/g, '<span style="opacity:0.7">').replace(/\u001b\[0m/g, '</span>');
@@ -231,18 +273,9 @@
         async function executeAction() {
             const btn = document.getElementById('btnExecute'); const btnStop = document.getElementById('btnStop'); const term = document.getElementById('terminalOutput');
             btn.innerText = '...'; btn.disabled = true; term.innerHTML = '';
-            const payload = { 
-                subscriber_id: document.getElementById('inpSubId').value, 
-                msisdn: document.getElementById('inpMsisdn').value, 
-                script_type: currentMode,
-                script_name: currentScriptName
-            };
             
-            let endpoint = '';
-            if (currentMode === 'custom' || currentMode.endsWith('_massive')) endpoint = '/run_massive';
-            else if (currentMode === 'insert') endpoint = '/insert';
-            else if (currentMode === 'delete') endpoint = '/delete';
-            else endpoint = '/sps_flow';
+            const payload = { subscriber_id: document.getElementById('inpSubId').value, msisdn: document.getElementById('inpMsisdn').value, script_type: currentMode, script_name: currentScriptName };
+            const endpoint = (currentMode.endsWith('_massive') || currentMode === 'custom') ? '/run_massive' : (currentMode === 'insert' ? '/insert' : (currentMode === 'delete' ? '/delete' : '/sps_flow'));
 
             if (currentMode.endsWith('_massive') || currentMode === 'custom') btnStop.style.display = 'block';
 
