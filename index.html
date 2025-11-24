@@ -175,14 +175,12 @@
             document.getElementById('inpSubId').value = '';
             document.getElementById('inpMsisdn').value = '';
             
-            // Reseta visibilidade (mostra inputs por padrão)
             formInputs.style.display = 'block';
             document.getElementById('inpSubId').style.display = 'block';
             document.getElementById('inpMsisdn').style.display = 'block';
             document.getElementById('lblMsisdn').style.display = 'block';
-            btn.className = 'btn-action'; // Reseta cor do botão
+            btn.className = 'btn-action';
 
-            // Configuração condicional
             if (mode === 'insert') {
                 title.innerText = 'Novo Cadastro PS8';
                 sub.innerText = 'Insira os dados para criar um novo registro.';
@@ -200,11 +198,10 @@
                 document.getElementById('lblMsisdn').style.display = 'none';
                 btn.innerText = 'Executar SPS Flow';
             } else if (mode.endsWith('_massive')) {
-                // Lógica dos Massivos
                 title.innerText = mode === 'active_massive' ? 'Massivo: SPS Active' : 'Massivo: SPS Change';
-                sub.innerText = 'Execução automática de script em lote. Verifique os arquivos na pasta.';
-                formInputs.style.display = 'none'; // Esconde todos os inputs
-                btn.className += ' btn-massive'; // Estilo laranja/azul
+                sub.innerText = 'Execução automática de script em tempo real.';
+                formInputs.style.display = 'none'; 
+                btn.className += ' btn-massive';
                 btn.innerText = 'Iniciar Processamento Massivo';
             }
 
@@ -223,27 +220,23 @@
 
         function jsonToTerminal(obj) {
             const term = document.getElementById('terminalOutput');
-            if (typeof obj === 'string') {
-                term.innerHTML += `\n${obj}`; // Exibe output bruto do massivo
-            } else {
-                const jsonStr = JSON.stringify(obj, null, 2);
-                // Colorização simples
-                const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                    let cls = 'log-string'; // default
-                    if (/^"/.test(match)) {
-                        if (/:$/.test(match)) cls = 'log-key';
-                    } else if (/true|false/.test(match)) cls = 'log-success';
-                    else if (/null/.test(match)) cls = 'log-error';
-                    return '<span class="' + cls + '">' + match + '</span>';
-                });
-                term.innerHTML += `\n${coloredJson}`;
-            }
+            const jsonStr = JSON.stringify(obj, null, 2);
+            const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'log-string';
+                if (/^"/.test(match)) { if (/:$/.test(match)) cls = 'log-key'; } 
+                else if (/true|false/.test(match)) cls = 'log-success';
+                else if (/null/.test(match)) cls = 'log-error';
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+            term.innerHTML += `\n${coloredJson}`;
             term.scrollTop = term.scrollHeight;
         }
 
+        // --- FUNÇÃO PRINCIPAL DE EXECUÇÃO ---
         async function executeAction() {
             const btn = document.getElementById('btnExecute');
             const originalText = btn.innerText;
+            const term = document.getElementById('terminalOutput');
             btn.innerText = 'Processando...'; btn.disabled = true;
 
             const subId = document.getElementById('inpSubId').value;
@@ -252,15 +245,42 @@
             logToTerminal('----------------------------------------');
             logToTerminal(`> Iniciando: ${currentMode.toUpperCase()}`);
             
-            let endpoint = '', payload = {};
+            // LOGICA PARA SCRIPT MASSIVO (STREAMING REAL-TIME)
+            if (currentMode.endsWith('_massive')) {
+                try {
+                    logToTerminal(`> Conectando ao stream...`);
+                    const response = await fetch(`${BASE_URL}/run_massive`, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ script_type: currentMode })
+                    });
 
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        // Decodifica e adiciona ao terminal instantaneamente
+                        const chunk = decoder.decode(value, { stream: true });
+                        term.innerHTML += chunk; // Adiciona o texto bruto
+                        term.scrollTop = term.scrollHeight; // Auto-scroll
+                    }
+                    logToTerminal('> Processo finalizado.', 'success');
+
+                } catch (error) {
+                    logToTerminal(`> ERRO DE STREAM: ${error.message}`, 'error');
+                } finally {
+                    btn.innerText = originalText; btn.disabled = false;
+                }
+                return; // Sai da função pois já tratou o massivo
+            }
+
+            // LOGICA PARA REQUISIÇÕES PADRÃO (JSON)
+            let endpoint = '', payload = {};
             if (currentMode === 'insert') { endpoint = '/insert'; payload = { subscriber_id: subId, msisdn: msisdn }; }
             else if (currentMode === 'delete') { endpoint = '/delete'; payload = { msisdn: msisdn }; }
             else if (currentMode.startsWith('sps_')) { endpoint = '/sps_flow'; payload = { subscriber_id: subId, op_type: currentMode === 'sps_refresh' ? 'REFRESH' : 'CANSUB' }; }
-            else if (currentMode.endsWith('_massive')) { 
-                endpoint = '/run_massive'; 
-                payload = { script_type: currentMode }; 
-            }
 
             try {
                 logToTerminal(`> Request: ${endpoint}...`);
@@ -271,8 +291,7 @@
 
                 if (response.ok && result.status === 'success') {
                     logToTerminal('> SUCESSO!', 'success');
-                    if (result.output) jsonToTerminal(result.output); // Output do massivo
-                    else jsonToTerminal(result);
+                    jsonToTerminal(result);
                 } else {
                     logToTerminal('> FALHA!', 'error');
                     jsonToTerminal(result);
