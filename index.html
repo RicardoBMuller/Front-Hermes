@@ -3,125 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interface de Operações PS8 - Proxy</title>
+    <title>MVNO Nubank Operations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
-        h2 { color: #555; }
-        .flow-section { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-        input[type="text"], button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
-        button { cursor: pointer; background-color: #007bff; color: white; border: none; transition: background-color 0.3s; }
-        button:hover { background-color: #0056b3; }
-        .output { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; white-space: pre-wrap; word-break: break-all; }
-        .status-success { color: green; font-weight: bold; }
-        .status-error { color: red; font-weight: bold; }
-        .sps-buttons button { background-color: #28a745; }
-        .sps-buttons button:hover { background-color: #1e7e34; }
-        .sps-buttons { display: flex; gap: 10px; }
+        /* --- ESTILO GERAL E FUNDO ANIMADO --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #1f1c2c, #928DAB, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- GLASSMORPHISM CONTAINER --- */
+        .glass-container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* --- SEÇÕES E INPUTS --- */
+        .section-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            transition: all 0.3s ease;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"]:focus {
+            border-color: #23a6d5;
+            box-shadow: 0 0 0 3px rgba(35, 166, 213, 0.2);
+        }
+
+        /* --- BOTÕES MODERNOS --- */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #2193b0, #6dd5ed);
+            color: white;
+            box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #eb3349, #f45c43);
+            color: white;
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #11998e, #38ef7d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* --- MODAL (POP-UP) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 16px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .close-btn {
+            background: transparent;
+            color: #999;
+            font-size: 1.5rem;
+            padding: 0;
+            width: 30px;
+            box-shadow: none;
+            flex: none;
+        }
+        .close-btn:hover { color: #333; background: transparent; transform: none; box-shadow: none; }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        /* Estilização bonita do JSON/Resultados */
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .result-table th, .result-table td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        .result-table th { background: #f9f9f9; color: #666; width: 30%; }
+        .result-table td { color: #333; font-weight: 500; }
+        .json-key { color: #d63384; }
+        .json-string { color: #198754; }
+        .json-number { color: #0d6efd; }
+        .json-boolean { color: #fd7e14; }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .bg-success { background: #d1e7dd; color: #0f5132; }
+        .bg-error { background: #f8d7da; color: #842029; }
+
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Operações de Backend via Proxy Python (Localhost:5000)</h1>
-        <p><strong>ATENÇÃO:</strong> Esta interface só funciona se o <code>app_backend.py</code> estiver rodando no seu computador (servidor) e a sua VPN estiver ativa.</p>
 
-        <div class="flow-section" id="ps8-flow">
-            <h2>1. Fluxo de Cadastro e Cancelamento PS8</h2>
-            <p>Insira os dados para o fluxo principal (Consulta CSG e Requisição Claro).</p>
-            <label for="subIdInsert">SubscriberID:</label>
-            <input type="text" id="subIdInsert" placeholder="Ex: 99999999">
-            
-            <label for="msisdnInsert">MSISDN (c/ DDD):</label>
-            <input type="text" id="msisdnInsert" placeholder="Ex: 11988887777">
-
-            <button onclick="runInsertFlow()">▶️ Executar Fluxo de INSERÇÃO (Consulta CSG + POST Claro)</button>
-            <button style="background-color: #dc3545;" onclick="runDeleteFlow()">❌ Executar Fluxo de CANCELAMENTO (PATCH Claro)</button>
+    <div class="glass-container">
+        <div class="header">
+            <h1>MVNO Operations Dashboard</h1>
+            <p>Interface de Gerenciamento e Execução de Processos</p>
         </div>
 
-        <div class="flow-section" id="sps-flow">
-            <h2>2. Fluxo de SPS (CANSUB/REFRESH)</h2>
-            <p>Executa a busca de dados e as chamadas CANSUB e REFRESH (se for portabilidade).</p>
-            <label for="subIdSPS">SubscriberID:</label>
-            <input type="text" id="subIdSPS" placeholder="Ex: 99999999">
+        <div class="content">
+            <div class="section-card">
+                <div class="section-title">
+                    <span>⚡</span> Fluxo Cadastro/Cancelamento PS8
+                </div>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <label>SubscriberID</label>
+                        <input type="text" id="subIdInsert" placeholder="Ex: 99999999">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>MSISDN (com DDD)</label>
+                        <input type="text" id="msisdnInsert" placeholder="Ex: 11988887777">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="runInsertFlow()">
+                        <span>▶</span> Executar Inclusão
+                    </button>
+                    <button class="btn-danger" onclick="runDeleteFlow()">
+                        <span>✕</span> Executar Cancelamento
+                    </button>
+                </div>
+            </div>
 
-            <div class="sps-buttons">
-                <button onclick="runSPSFlow('CANSUB')">✨ Executar CANSUB</button>
-                <button onclick="runSPSFlow('REFRESH')">🔄 Executar CANSUB + REFRESH (Para Portin)</button>
+            <div class="section-card">
+                <div class="section-title">
+                    <span>🔄</span> Fluxo SPS (Portabilidade/Refresh)
+                </div>
+                <div class="form-group">
+                    <div class="input-wrapper" style="grid-column: span 2;">
+                        <label>SubscriberID</label>
+                        <input type="text" id="subIdSPS" placeholder="Ex: 99999999">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-success" onclick="runSPSFlow('CANSUB')">
+                        <span>✨</span> Executar CANSUB
+                    </button>
+                    <button class="btn-success" onclick="runSPSFlow('REFRESH')">
+                        <span>🔄</span> CANSUB + REFRESH (Portin)
+                    </button>
+                </div>
             </div>
         </div>
+    </div>
 
-        <h2>Resultados</h2>
-        <div class="output" id="output">Aguardando execução...</div>
+    <div class="modal-overlay" id="resultModal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Resultado da Operação</h2>
+                <button class="close-btn" onclick="closeModalBtn()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                </div>
+        </div>
     </div>
 
     <script>
         const BASE_URL = 'http://localhost:5000/api';
 
-        async function sendRequest(endpoint, data, buttonId) {
-            const outputElement = document.getElementById('output');
-            outputElement.innerHTML = `<span style="color: blue;">Enviando requisição para ${endpoint}...</span>`;
+        // --- LÓGICA DO MODAL ---
+        function showModal(title, contentHTML, isError = false) {
+            const modal = document.getElementById('resultModal');
+            const titleEl = document.getElementById('modalTitle');
+            const bodyEl = document.getElementById('modalBody');
+
+            titleEl.textContent = title;
+            titleEl.style.color = isError ? '#dc3545' : '#198754';
+            bodyEl.innerHTML = contentHTML;
+
+            modal.classList.add('active');
+        }
+
+        function closeModal(e) {
+            if (e.target.id === 'resultModal') {
+                document.getElementById('resultModal').classList.remove('active');
+            }
+        }
+        function closeModalBtn() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        // --- FORMATADOR DE JSON PARA HTML ---
+        function formatJSON(obj) {
+            if (typeof obj !== 'object' || obj === null) return obj;
             
-            const originalButtonText = document.getElementById(buttonId) ? document.getElementById(buttonId).innerHTML : null;
-            if (originalButtonText) document.getElementById(buttonId).innerHTML = 'Aguarde...';
+            let html = '<table class="result-table">';
+            for (let key in obj) {
+                let value = obj[key];
+                
+                if (typeof value === 'object' && value !== null) {
+                    // Recursão para objetos aninhados
+                    value = formatJSON(value); 
+                } else if (typeof value === 'string') {
+                    value = `<span class="json-string">"${value}"</span>`;
+                } else if (typeof value === 'number') {
+                    value = `<span class="json-number">${value}</span>`;
+                } else if (typeof value === 'boolean') {
+                    value = `<span class="json-boolean">${value}</span>`;
+                }
+
+                html += `<tr><th>${key}</th><td>${value}</td></tr>`;
+            }
+            html += '</table>';
+            return html;
+        }
+
+        // --- FUNÇÃO DE REQUISIÇÃO CENTRALIZADA ---
+        async function sendRequest(endpoint, data, btnElement) {
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = '<div class="loader" style="display:block; border-color: white; border-top-color: transparent; width: 20px; height: 20px;"></div>';
+            btnElement.disabled = true;
 
             try {
                 const response = await fetch(`${BASE_URL}${endpoint}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
 
                 const result = await response.json();
 
                 if (response.ok && result.status === 'success') {
-                    outputElement.innerHTML = `<p class="status-success">✅ SUCESSO! Resposta do Backend:</p><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                    let displayContent = '';
+                    
+                    // Personaliza exibição baseada no retorno
+                    if(result.customer_data) {
+                        displayContent += '<h3>Dados do Cliente:</h3>' + formatJSON(result.customer_data);
+                    }
+                    if(result.result) {
+                         displayContent += '<h3>Dados SPS:</h3>' + formatJSON(result.result);
+                    }
+                    // Fallback para resposta genérica
+                    displayContent += '<h3>Resposta do Servidor:</h3>' + formatJSON(result.response || result);
+
+                    showModal('✅ Sucesso!', displayContent);
                 } else {
-                    const message = result.message || 'Erro desconhecido.';
-                    const details = result.details ? JSON.stringify(result.details, null, 2) : '';
-                    outputElement.innerHTML = `<p class="status-error">❌ ERRO! ${message}</p><pre>${details}</pre>`;
+                    const errorMsg = result.message || 'Erro desconhecido';
+                    const details = result.details ? `<br><div style="background:#eee; padding:10px; border-radius:5px; margin-top:10px;">${result.details}</div>` : '';
+                    showModal('❌ Erro na Operação', `<p>${errorMsg}</p>${details}`, true);
                 }
+
             } catch (error) {
-                outputElement.innerHTML = `<p class="status-error">❌ ERRO DE CONEXÃO: Não foi possível conectar ao servidor Python (localhost:5000).</p><pre>Detalhes: ${error.message}</pre>`;
+                showModal('❌ Erro de Conexão', `<p>Não foi possível contatar o servidor local.</p><p>Verifique se o python app_backend.py está rodando.</p><p>${error.message}</p>`, true);
             } finally {
-                if (originalButtonText) document.getElementById(buttonId).innerHTML = originalButtonText;
+                btnElement.innerHTML = originalText;
+                btnElement.disabled = false;
             }
         }
 
+        // --- TRIGGERS DOS BOTÕES ---
         function runInsertFlow() {
             const subId = document.getElementById('subIdInsert').value;
             const msisdn = document.getElementById('msisdnInsert').value;
-            if (!subId || !msisdn) {
-                alert('Preencha o SubscriberID e o MSISDN.');
-                return;
-            }
-            const data = { subscriber_id: subId, msisdn: msisdn };
-            sendRequest('/insert', data, 'ps8-flow').querySelector('button:nth-child(3)').id; // ID do botão de inserção
+            if (!subId || !msisdn) return alert('Preencha todos os campos!');
+            sendRequest('/insert', { subscriber_id: subId, msisdn: msisdn }, event.currentTarget);
         }
 
         function runDeleteFlow() {
             const msisdn = document.getElementById('msisdnInsert').value;
-            if (!msisdn) {
-                alert('Preencha o MSISDN para o cancelamento.');
-                return;
-            }
-            const data = { msisdn: msisdn };
-            sendRequest('/delete', data, 'ps8-flow').querySelector('button:last-child').id; // ID do botão de cancelamento
+            if (!msisdn) return alert('Preencha o MSISDN!');
+            if(!confirm('Tem certeza que deseja cancelar este número?')) return;
+            sendRequest('/delete', { msisdn: msisdn }, event.currentTarget);
         }
 
         function runSPSFlow(op_type) {
             const subId = document.getElementById('subIdSPS').value;
-            if (!subId) {
-                alert('Preencha o SubscriberID para o fluxo SPS.');
-                return;
-            }
-            const data = { subscriber_id: subId, op_type: op_type };
-            const buttonId = op_type === 'CANSUB' ? 'sps-flow' : 'sps-flow';
-            sendRequest('/sps_flow', data, buttonId).querySelector('.sps-buttons button:nth-child(' + (op_type === 'CANSUB' ? 1 : 2) + ')').id;
+            if (!subId) return alert('Preencha o SubscriberID!');
+            sendRequest('/sps_flow', { subscriber_id: subId, op_type: op_type }, event.currentTarget);
         }
-
     </script>
 </body>
 </html>
