@@ -6,7 +6,6 @@
     <title>MVNO Ops Board</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
     <style>
-        /* (Mantido todo o CSS anterior, ele estava correto para o layout fixo) */
         :root { --bg-body: linear-gradient(-45deg, #1f1c2c, #4b1248, #2c3e50, #000000); --board-bg: #101204; --card-bg: #22272b; --text-color: #b6c2cf; --modal-bg: #323940; --terminal-bg: #0d1117; --btn-primary: #579dff; --btn-danger: #ff4d4d; --label-yellow: #f2d600; --label-red: #eb5a46; --label-green: #61bd4f; --label-purple: #c377e0; --label-orange: #ff9f1a; --label-blue: #0079bf; }
         body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; background: var(--bg-body); background-size: 400% 400%; animation: gradientAnim 15s ease infinite; color: var(--text-color); overflow: hidden; display: flex; flex-direction: column; }
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
@@ -24,16 +23,20 @@
         .card-title { color: #dcdfe4; font-size: 0.95rem; display: block; }
         .card-footer { display: flex; gap: 10px; margin-top: 8px; font-size: 0.75rem; color: #8c9bab; }
         .icon-sm { display: inline-block; width: 14px; height: 14px; background-color: rgba(255,255,255,0.1); border-radius: 2px; }
+        
+        /* MODAL */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; backdrop-filter: blur(5px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-window { background-color: var(--modal-bg); width: 90%; max-width: 1100px; height: 80vh; max-height: 700px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: flex; overflow: hidden; transform: translateY(-20px); transition: transform 0.3s; }
         .modal-overlay.active .modal-window { transform: translateY(0); }
+        
         .modal-main { width: 350px; flex-shrink: 0; padding: 24px; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; background-color: var(--modal-bg); overflow-y: auto; }
         .modal-title { font-size: 1.3rem; font-weight: 600; color: #dcdfe4; margin: 0 0 5px 0; }
         .modal-subtitle { font-size: 0.85rem; color: #9fadbc; margin-bottom: 25px; }
         .form-label { display: block; font-weight: 600; font-size: 0.8rem; color: #9fadbc; margin-bottom: 8px; text-transform: uppercase; }
         .input-trello { width: 100%; background: rgba(0,0,0,0.2); border: 2px solid transparent; border-radius: 3px; padding: 10px; color: #dcdfe4; font-size: 0.95rem; margin-bottom: 15px; box-sizing: border-box; }
         .input-trello:focus { outline: none; border-color: #579dff; background: #22272b; }
+        
         .action-area { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
         .btn-action { background-color: var(--btn-primary); color: #1d2125; font-weight: 600; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1rem; transition: background 0.2s; }
         .btn-action:hover { filter: brightness(1.1); }
@@ -41,6 +44,7 @@
         .btn-action.btn-massive { background-color: var(--label-orange); color: #1d2125; }
         #btnStop { background-color: var(--btn-danger); color: white; font-weight: 600; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; display: none; }
         #btnStop:hover { filter: brightness(1.1); }
+        
         .modal-sidebar { flex-grow: 1; background-color: #2a2f35; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
         .sidebar-title { font-size: 0.8rem; font-weight: 600; color: #9fadbc; margin-bottom: 12px; text-transform: uppercase; flex-shrink: 0; }
         .terminal-view { flex-grow: 1; background-color: var(--terminal-bg); border-radius: 6px; padding: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; line-height: 1.4; color: #c9d1d9; overflow-y: auto; height: 100%; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #30363d; }
@@ -48,7 +52,6 @@
         .terminal-view::-webkit-scrollbar-track { background: #0d1117; }
         .terminal-view::-webkit-scrollbar-thumb { background: #4a515a; border-radius: 6px; border: 2px solid #0d1117; }
         .terminal-view::-webkit-scrollbar-thumb:hover { background: #579dff; }
-        .log-string { color: #a5d6ff; } .log-key { color: #79c0ff; } .log-success { color: #7ee787; font-weight: bold; } .log-error { color: #ff7b72; font-weight: bold; } .log-info { color: #8b949e; }
         .close-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9fadbc; font-size: 1.5rem; cursor: pointer; z-index: 1001; }
     </style>
 </head>
@@ -119,37 +122,27 @@
             else if (mode.endsWith('_massive')) { title.innerText = 'Execução Massiva'; formInputs.style.display = 'none'; btn.className += ' btn-massive'; btn.innerText = 'Iniciar Processamento'; }
             modal.classList.add('active');
         }
-        function closeModal() { document.getElementById('opModal').classList.remove('active'); }
         
-        // Função para converter códigos ANSI do Python/Colorama para HTML
+        function closeModal() { document.getElementById('opModal').classList.remove('active'); }
+        document.getElementById('opModal').addEventListener('click', (e) => { 
+            if(e.target.id === 'opModal') closeModal(); 
+        });
+        
         function cleanANSI(text) {
             if (!text) return '';
-            // Mapeamento básico de cores ANSI
-            text = text.replace(/\u001b\[31m/g, '<span style="color:#ff7b72">') // Vermelho
-                       .replace(/\u001b\[32m/g, '<span style="color:#7ee787">') // Verde
-                       .replace(/\u001b\[33m/g, '<span style="color:#d29922">') // Amarelo
-                       .replace(/\u001b\[34m/g, '<span style="color:#79c0ff">') // Azul
-                       .replace(/\u001b\[35m/g, '<span style="color:#d2a8ff">') // Magenta
-                       .replace(/\u001b\[36m/g, '<span style="color:#a5d6ff">') // Ciano
-                       .replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">') // Branco
-                       .replace(/\u001b\[1m/g, '<span style="font-weight:bold">') // Negrito
-                       .replace(/\u001b\[2m/g, '<span style="opacity:0.7">') // Dim
-                       .replace(/\u001b\[0m/g, '</span>'); // Reset
-            
-            // Remove outros códigos de escape residuais
+            text = text.replace(/\u001b\[31m/g, '<span style="color:#ff7b72">').replace(/\u001b\[32m/g, '<span style="color:#7ee787">').replace(/\u001b\[33m/g, '<span style="color:#d29922">').replace(/\u001b\[34m/g, '<span style="color:#79c0ff">').replace(/\u001b\[35m/g, '<span style="color:#d2a8ff">').replace(/\u001b\[36m/g, '<span style="color:#a5d6ff">').replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">').replace(/\u001b\[1m/g, '<span style="font-weight:bold">').replace(/\u001b\[2m/g, '<span style="opacity:0.7">').replace(/\u001b\[0m/g, '</span>');
             return text.replace(/\u001b\[[0-9;]*m/g, '');
         }
 
-        function logToTerminal(text, type='info') {
+        function logToTerminal(text) {
             const term = document.getElementById('terminalOutput');
-            const color = type === 'success' ? '#7ee787' : type === 'error' ? '#ff7b72' : '#8b949e';
-            term.innerHTML += `<div><span style="color:${color}">> ${text}</span></div>`;
+            term.innerHTML += `<div><span style="color:#8b949e">> ${text}</span></div>`;
             term.scrollTop = term.scrollHeight;
         }
 
         async function stopExecution() {
             if(streamReader) await streamReader.cancel();
-            logToTerminal('Parando...', 'error');
+            logToTerminal('Parando...');
             await fetch(`${BASE_URL}/stop_massive`, { method: 'POST' });
             document.getElementById('btnExecute').disabled = false; document.getElementById('btnExecute').innerText = 'Iniciar'; document.getElementById('btnStop').style.display = 'none';
         }
@@ -164,28 +157,17 @@
 
             try {
                 const response = await fetch(`${BASE_URL}${endpoint}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                streamReader = response.body.getReader();
+                const decoder = new TextDecoder();
                 
-                if (currentMode.endsWith('_massive')) {
-                    streamReader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    while(true) {
-                        const {done, value} = await streamReader.read();
-                        if(done) break;
-                        // Processa o chunk com cores ANSI
-                        const chunk = decoder.decode(value, {stream: true});
-                        term.innerHTML += cleanANSI(chunk);
-                        term.scrollTop = term.scrollHeight;
-                    }
-                } else {
-                    const res = await response.json();
-                    if(res.output_raw) {
-                        // Exibe o output formatado vindo do backend (já com ANSI)
-                        term.innerHTML += cleanANSI(res.output_raw);
-                    } else {
-                        term.innerText += JSON.stringify(res, null, 2);
-                    }
+                while(true) {
+                    const {done, value} = await streamReader.read();
+                    if(done) break;
+                    const chunk = decoder.decode(value, {stream: true});
+                    term.innerHTML += cleanANSI(chunk);
+                    term.scrollTop = term.scrollHeight;
                 }
-            } catch (e) { logToTerminal(e.message, 'error'); }
+            } catch (e) { logToTerminal(e.message); }
             finally { btn.disabled = false; btn.innerText = 'Executar'; btnStop.style.display = 'none'; }
         }
     </script>
