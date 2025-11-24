@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface de Operações PS8 - Proxy</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #555; }
+        .flow-section { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        input[type="text"], button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
+        button { cursor: pointer; background-color: #007bff; color: white; border: none; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .output { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; white-space: pre-wrap; word-break: break-all; }
+        .status-success { color: green; font-weight: bold; }
+        .status-error { color: red; font-weight: bold; }
+        .sps-buttons button { background-color: #28a745; }
+        .sps-buttons button:hover { background-color: #1e7e34; }
+        .sps-buttons { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Operações de Backend via Proxy Python (Localhost:5000)</h1>
+        <p><strong>ATENÇÃO:</strong> Esta interface só funciona se o <code>app_backend.py</code> estiver rodando no seu computador (servidor) e a sua VPN estiver ativa.</p>
+
+        <div class="flow-section" id="ps8-flow">
+            <h2>1. Fluxo de Cadastro e Cancelamento PS8</h2>
+            <p>Insira os dados para o fluxo principal (Consulta CSG e Requisição Claro).</p>
+            <label for="subIdInsert">SubscriberID:</label>
+            <input type="text" id="subIdInsert" placeholder="Ex: 99999999">
+            
+            <label for="msisdnInsert">MSISDN (c/ DDD):</label>
+            <input type="text" id="msisdnInsert" placeholder="Ex: 11988887777">
+
+            <button onclick="runInsertFlow()">▶️ Executar Fluxo de INSERÇÃO (Consulta CSG + POST Claro)</button>
+            <button style="background-color: #dc3545;" onclick="runDeleteFlow()">❌ Executar Fluxo de CANCELAMENTO (PATCH Claro)</button>
+        </div>
+
+        <div class="flow-section" id="sps-flow">
+            <h2>2. Fluxo de SPS (CANSUB/REFRESH)</h2>
+            <p>Executa a busca de dados e as chamadas CANSUB e REFRESH (se for portabilidade).</p>
+            <label for="subIdSPS">SubscriberID:</label>
+            <input type="text" id="subIdSPS" placeholder="Ex: 99999999">
+
+            <div class="sps-buttons">
+                <button onclick="runSPSFlow('CANSUB')">✨ Executar CANSUB</button>
+                <button onclick="runSPSFlow('REFRESH')">🔄 Executar CANSUB + REFRESH (Para Portin)</button>
+            </div>
+        </div>
+
+        <h2>Resultados</h2>
+        <div class="output" id="output">Aguardando execução...</div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:5000/api';
+
+        async function sendRequest(endpoint, data, buttonId) {
+            const outputElement = document.getElementById('output');
+            outputElement.innerHTML = `<span style="color: blue;">Enviando requisição para ${endpoint}...</span>`;
+            
+            const originalButtonText = document.getElementById(buttonId) ? document.getElementById(buttonId).innerHTML : null;
+            if (originalButtonText) document.getElementById(buttonId).innerHTML = 'Aguarde...';
+
+            try {
+                const response = await fetch(`${BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    outputElement.innerHTML = `<p class="status-success">✅ SUCESSO! Resposta do Backend:</p><pre>${JSON.stringify(result, null, 2)}</pre>`;
+                } else {
+                    const message = result.message || 'Erro desconhecido.';
+                    const details = result.details ? JSON.stringify(result.details, null, 2) : '';
+                    outputElement.innerHTML = `<p class="status-error">❌ ERRO! ${message}</p><pre>${details}</pre>`;
+                }
+            } catch (error) {
+                outputElement.innerHTML = `<p class="status-error">❌ ERRO DE CONEXÃO: Não foi possível conectar ao servidor Python (localhost:5000).</p><pre>Detalhes: ${error.message}</pre>`;
+            } finally {
+                if (originalButtonText) document.getElementById(buttonId).innerHTML = originalButtonText;
+            }
+        }
+
+        function runInsertFlow() {
+            const subId = document.getElementById('subIdInsert').value;
+            const msisdn = document.getElementById('msisdnInsert').value;
+            if (!subId || !msisdn) {
+                alert('Preencha o SubscriberID e o MSISDN.');
+                return;
+            }
+            const data = { subscriber_id: subId, msisdn: msisdn };
+            sendRequest('/insert', data, 'ps8-flow').querySelector('button:nth-child(3)').id; // ID do botão de inserção
+        }
+
+        function runDeleteFlow() {
+            const msisdn = document.getElementById('msisdnInsert').value;
+            if (!msisdn) {
+                alert('Preencha o MSISDN para o cancelamento.');
+                return;
+            }
+            const data = { msisdn: msisdn };
+            sendRequest('/delete', data, 'ps8-flow').querySelector('button:last-child').id; // ID do botão de cancelamento
+        }
+
+        function runSPSFlow(op_type) {
+            const subId = document.getElementById('subIdSPS').value;
+            if (!subId) {
+                alert('Preencha o SubscriberID para o fluxo SPS.');
+                return;
+            }
+            const data = { subscriber_id: subId, op_type: op_type };
+            const buttonId = op_type === 'CANSUB' ? 'sps-flow' : 'sps-flow';
+            sendRequest('/sps_flow', data, buttonId).querySelector('.sps-buttons button:nth-child(' + (op_type === 'CANSUB' ? 1 : 2) + ')').id;
+        }
+
+    </script>
+</body>
+</html>
