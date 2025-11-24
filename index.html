@@ -3,202 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MVNO Nubank Operations</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>MVNO Ops Board</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
-        /* --- ESTILO GERAL E FUNDO ANIMADO --- */
+        :root {
+            --bg-body: linear-gradient(-45deg, #1f1c2c, #4b1248, #2c3e50, #000000);
+            --board-bg: #101204; /* Cor de fundo da lista (quase preto) */
+            --card-bg: #22272b;  /* Cor do cartão (cinza escuro Trello) */
+            --text-color: #b6c2cf;
+            --text-bold: #9fadbc;
+            --modal-bg: #323940;
+            --terminal-bg: #0d1117;
+            --btn-primary: #579dff;
+            --btn-hover: #85b8ff;
+            --label-yellow: #f2d600;
+            --label-red: #eb5a46;
+            --label-green: #61bd4f;
+            --label-purple: #c377e0;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(-45deg, #1f1c2c, #928DAB, #23a6d5, #23d5ab);
+            background: var(--bg-body);
             background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #333;
-            overflow: hidden;
+            animation: gradientAnim 15s ease infinite;
+            color: var(--text-color);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        @keyframes gradientBG {
+        @keyframes gradientAnim {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
-        /* --- GLASSMORPHISM CONTAINER --- */
-        .glass-container {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            width: 90%;
-            max-width: 900px;
-            height: 85vh;
+        /* --- HEADER --- */
+        .board-header {
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            padding: 12px 24px;
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .header {
-            padding: 20px 30px;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            background: rgba(255,255,255,0.5);
+        .board-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            margin-right: 15px;
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: #333;
+        .board-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #fff;
             font-weight: 600;
         }
 
-        .header p {
-            margin: 5px 0 0;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .content {
-            padding: 30px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        /* --- SEÇÕES E INPUTS --- */
-        .section-card {
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 12px;
+        /* --- KANBAN CONTAINER --- */
+        .board-canvas {
+            flex-grow: 1;
             padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: transform 0.2s ease;
-        }
-
-        .section-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #444;
+            overflow-x: auto;
             display: flex;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start;
+            gap: 16px;
         }
 
-        .form-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
+        /* --- LISTAS (COLUNAS) --- */
+        .list-wrapper {
+            width: 300px;
+            flex-shrink: 0;
+            background-color: var(--board-bg); /* Cor fundo da lista Trello Dark */
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .input-wrapper {
+        .list-header {
+            padding: 4px 8px 12px 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- CARTÕES (CARDS) --- */
+        .list-cards {
             display: flex;
             flex-direction: column;
-        }
-
-        label {
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: #fff;
-            transition: all 0.3s ease;
-            outline: none;
-            font-size: 0.95rem;
-        }
-
-        input[type="text"]:focus {
-            border-color: #23a6d5;
-            box-shadow: 0 0 0 3px rgba(35, 166, 213, 0.2);
-        }
-
-        /* --- BOTÕES MODERNOS --- */
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             gap: 8px;
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, #2193b0, #6dd5ed);
-            color: white;
-            box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            position: relative;
+            border: 1px solid transparent;
         }
 
-        .btn-danger {
-            background: linear-gradient(45deg, #eb3349, #f45c43);
-            color: white;
-            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+        .card:hover {
+            background-color: #2c333a;
+            border-color: #579dff;
         }
 
-        .btn-success {
-            background: linear-gradient(45deg, #11998e, #38ef7d);
-            color: white;
-            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+        /* Labels dos Cartões */
+        .card-label {
+            width: 40px;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .lbl-yellow { background-color: var(--label-yellow); }
+        .lbl-red { background-color: var(--label-red); }
+        .lbl-green { background-color: var(--label-green); }
+        .lbl-purple { background-color: var(--label-purple); }
+
+        .card-title {
+            color: #dcdfe4;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .card-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: #8c9bab;
         }
         
-        button:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
+        .icon-sm {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 2px;
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* --- MODAL (POP-UP) --- */
+        /* --- MODAL (POP-UP ESTILO TRELLO) --- */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(5px);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
+            padding-top: 60px;
+            z-index: 999;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s ease;
-            z-index: 1000;
+            transition: all 0.2s ease-in-out;
+            backdrop-filter: blur(5px);
         }
 
         .modal-overlay.active {
@@ -206,272 +178,393 @@
             visibility: visible;
         }
 
-        .modal-content {
-            background: white;
-            width: 90%;
-            max-width: 800px;
-            max-height: 85vh;
-            border-radius: 16px;
-            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
-            transform: scale(0.8);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex;
-            flex-direction: column;
+        .modal-window {
+            background-color: var(--modal-bg);
+            width: 800px;
+            min-height: 500px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: grid;
+            grid-template-columns: 3fr 2fr; /* Coluna Esquerda (Inputs) vs Direita (Terminal) */
             overflow: hidden;
+            transform: translateY(-20px);
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        
+        .modal-overlay.active .modal-window {
+            transform: translateY(0);
         }
 
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
+        /* Coluna da Esquerda (Ações) */
+        .modal-main {
+            padding: 24px;
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
 
-        .modal-header {
-            padding: 20px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #333;
-        }
-
-        .close-btn {
-            background: transparent;
-            color: #999;
+        .modal-header-icon {
             font-size: 1.5rem;
-            padding: 0;
-            width: 30px;
-            box-shadow: none;
-            flex: none;
-        }
-        .close-btn:hover { color: #333; background: transparent; transform: none; box-shadow: none; }
-
-        .modal-body {
-            padding: 20px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 0.9rem;
-            color: #444;
-            line-height: 1.5;
+            margin-right: 10px;
         }
 
-        /* Estilização bonita do JSON/Resultados */
-        .result-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .result-table th, .result-table td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
-        .result-table th { background: #f9f9f9; color: #666; width: 30%; }
-        .result-table td { color: #333; font-weight: 500; }
-        .json-key { color: #d63384; }
-        .json-string { color: #198754; }
-        .json-number { color: #0d6efd; }
-        .json-boolean { color: #fd7e14; }
+        .modal-title-area {
+            margin-bottom: 30px;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #dcdfe4;
+            margin: 0;
+        }
+        
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: #9fadbc;
+            margin-top: 5px;
+        }
 
-        .status-badge {
-            padding: 5px 10px;
-            border-radius: 20px;
+        /* Inputs Estilizados */
+        .form-section {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
             font-size: 0.8rem;
-            font-weight: bold;
+            color: #9fadbc;
+            margin-bottom: 8px;
             text-transform: uppercase;
         }
-        .bg-success { background: #d1e7dd; color: #0f5132; }
-        .bg-error { background: #f8d7da; color: #842029; }
 
-        /* Loader */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            display: none;
-            margin: auto;
+        .input-trello {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 2px solid transparent;
+            border-radius: 3px;
+            padding: 10px;
+            color: #dcdfe4;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            transition: border-color 0.2s;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .input-trello:focus {
+            outline: none;
+            border-color: #579dff;
+            background: #22272b;
+        }
+
+        .btn-action {
+            background-color: var(--btn-primary);
+            color: #1d2125;
+            font-weight: 600;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        .btn-action:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .btn-action.btn-delete {
+            background-color: var(--label-red);
+            color: white;
+        }
+
+        /* Coluna da Direita (Terminal) */
+        .modal-sidebar {
+            background-color: #2a2f35;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9fadbc;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .terminal-view {
+            flex-grow: 1;
+            background-color: var(--terminal-bg);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #c9d1d9;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #30363d;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            height: 350px; /* Altura fixa para scroll */
+        }
+
+        /* Estilos do Log/JSON */
+        .log-key { color: #79c0ff; }
+        .log-string { color: #a5d6ff; }
+        .log-success { color: #7ee787; font-weight: bold; }
+        .log-error { color: #ff7b72; font-weight: bold; }
+        .log-info { color: #8b949e; }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #9fadbc;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .close-modal:hover { color: #fff; }
 
     </style>
 </head>
 <body>
 
-    <div class="glass-container">
-        <div class="header">
-            <h1>MVNO Operations Dashboard</h1>
-            <p>Interface de Gerenciamento e Execução de Processos</p>
-        </div>
-
-        <div class="content">
-            <div class="section-card">
-                <div class="section-title">
-                    <span>⚡</span> Fluxo Cadastro/Cancelamento PS8
-                </div>
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <label>SubscriberID</label>
-                        <input type="text" id="subIdInsert" placeholder="Ex: 99999999">
-                    </div>
-                    <div class="input-wrapper">
-                        <label>MSISDN (com DDD)</label>
-                        <input type="text" id="msisdnInsert" placeholder="Ex: 11988887777">
-                    </div>
-                </div>
-                <div class="btn-group">
-                    <button class="btn-primary" onclick="runInsertFlow()">
-                        <span>▶</span> Executar Inclusão
-                    </button>
-                    <button class="btn-danger" onclick="runDeleteFlow()">
-                        <span>✕</span> Executar Cancelamento
-                    </button>
-                </div>
-            </div>
-
-            <div class="section-card">
-                <div class="section-title">
-                    <span>🔄</span> Fluxo SPS (Portabilidade/Refresh)
-                </div>
-                <div class="form-group">
-                    <div class="input-wrapper" style="grid-column: span 2;">
-                        <label>SubscriberID</label>
-                        <input type="text" id="subIdSPS" placeholder="Ex: 99999999">
-                    </div>
-                </div>
-                <div class="btn-group">
-                    <button class="btn-success" onclick="runSPSFlow('CANSUB')">
-                        <span>✨</span> Executar CANSUB
-                    </button>
-                    <button class="btn-success" onclick="runSPSFlow('REFRESH')">
-                        <span>🔄</span> CANSUB + REFRESH (Portin)
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div class="board-header">
+        <div class="board-title">MVNO Operations Board</div>
+        <div class="board-badge">Nubank</div>
     </div>
 
-    <div class="modal-overlay" id="resultModal" onclick="closeModal(event)">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Resultado da Operação</h2>
-                <button class="close-btn" onclick="closeModalBtn()">×</button>
-            </div>
-            <div class="modal-body" id="modalBody">
+    <div class="board-canvas">
+        
+        <div class="list-wrapper">
+            <div class="list-header">Fluxo PS8</div>
+            <div class="list-cards">
+                
+                <div class="card" onclick="openModal('insert')">
+                    <span class="card-label lbl-yellow"></span>
+                    <span class="card-title">Novo Cadastro PS8</span>
+                    <div class="card-footer">
+                        <span class="icon-sm"></span> CSG + API Claro
+                    </div>
                 </div>
+
+                <div class="card" onclick="openModal('delete')">
+                    <span class="card-label lbl-red"></span>
+                    <span class="card-title">Cancelamento</span>
+                    <div class="card-footer">
+                        <span class="icon-sm"></span> Patch ReasonCode
+                    </div>
+                </div>
+
+            </div>
+            <div style="padding: 10px 4px; color: #9fadbc; font-size: 0.9rem; cursor: pointer;">+ Adicionar um cartão</div>
+        </div>
+
+        <div class="list-wrapper">
+            <div class="list-header">Fluxo SPS</div>
+            <div class="list-cards">
+                
+                <div class="card" onclick="openModal('sps_cansub')">
+                    <span class="card-label lbl-green"></span>
+                    <span class="card-title">Executar CANSUB</span>
+                    <div class="card-footer">
+                        <span class="icon-sm"></span> Apenas Cansub
+                    </div>
+                </div>
+
+                <div class="card" onclick="openModal('sps_refresh')">
+                    <span class="card-label lbl-purple"></span>
+                    <span class="card-title">CANSUB + REFRESH</span>
+                    <div class="card-footer">
+                        <span class="icon-sm"></span> Fluxo Portabilidade
+                    </div>
+                </div>
+
+            </div>
+            <div style="padding: 10px 4px; color: #9fadbc; font-size: 0.9rem; cursor: pointer;">+ Adicionar um cartão</div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="opModal">
+        <div class="modal-window">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            
+            <div class="modal-main">
+                <div class="modal-title-area">
+                    <h2 class="modal-title" id="modalTitle">Título da Operação</h2>
+                    <p class="modal-subtitle">Preencha os dados abaixo para execução no backend.</p>
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">Subscriber ID</label>
+                    <input type="text" class="input-trello" id="inpSubId" placeholder="Ex: 99999999">
+                    
+                    <label class="form-label" id="lblMsisdn">MSISDN (com DDD)</label>
+                    <input type="text" class="input-trello" id="inpMsisdn" placeholder="Ex: 11988887777">
+                </div>
+
+                <button class="btn-action" id="btnExecute" onclick="executeAction()">Executar Comando</button>
+            </div>
+
+            <div class="modal-sidebar">
+                <div class="sidebar-title">Terminal Output (Logs & JSON)</div>
+                <div class="terminal-view" id="terminalOutput">
+                    <span class="log-info">// Aguardando execução...</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const BASE_URL = 'http://localhost:5000/api';
+        let currentMode = '';
 
-        // --- LÓGICA DO MODAL ---
-        function showModal(title, contentHTML, isError = false) {
-            const modal = document.getElementById('resultModal');
-            const titleEl = document.getElementById('modalTitle');
-            const bodyEl = document.getElementById('modalBody');
+        // --- CONTROLE DO MODAL ---
+        function openModal(mode) {
+            currentMode = mode;
+            const modal = document.getElementById('opModal');
+            const title = document.getElementById('modalTitle');
+            const btn = document.getElementById('btnExecute');
+            const term = document.getElementById('terminalOutput');
+            
+            // Limpa inputs e terminal
+            term.innerHTML = '<span class="log-info">// Pronto para iniciar.</span>';
+            document.getElementById('inpSubId').value = '';
+            document.getElementById('inpMsisdn').value = '';
 
-            titleEl.textContent = title;
-            titleEl.style.color = isError ? '#dc3545' : '#198754';
-            bodyEl.innerHTML = contentHTML;
+            // Configura interface baseada no modo
+            if (mode === 'insert') {
+                title.innerText = 'Novo Cadastro PS8';
+                document.getElementById('inpSubId').style.display = 'block';
+                document.getElementById('inpMsisdn').style.display = 'block';
+                document.getElementById('lblMsisdn').style.display = 'block';
+                btn.className = 'btn-action';
+                btn.innerText = 'Executar Inclusão';
+            } 
+            else if (mode === 'delete') {
+                title.innerText = 'Cancelamento';
+                document.getElementById('inpSubId').style.display = 'none'; // Não precisa de SubId
+                document.getElementById('inpMsisdn').style.display = 'block';
+                document.getElementById('lblMsisdn').style.display = 'block';
+                btn.className = 'btn-action btn-delete';
+                btn.innerText = 'Executar Cancelamento';
+            }
+            else if (mode === 'sps_cansub' || mode === 'sps_refresh') {
+                title.innerText = mode === 'sps_cansub' ? 'Fluxo SPS: CANSUB' : 'Fluxo SPS: REFRESH';
+                document.getElementById('inpSubId').style.display = 'block';
+                document.getElementById('inpMsisdn').style.display = 'none'; // SPS busca MSISDN sozinho
+                document.getElementById('lblMsisdn').style.display = 'none';
+                btn.className = 'btn-action';
+                btn.innerText = 'Executar SPS Flow';
+            }
 
             modal.classList.add('active');
         }
 
-        function closeModal(e) {
-            if (e.target.id === 'resultModal') {
-                document.getElementById('resultModal').classList.remove('active');
-            }
-        }
-        function closeModalBtn() {
-            document.getElementById('resultModal').classList.remove('active');
+        function closeModal() {
+            document.getElementById('opModal').classList.remove('active');
         }
 
-        // --- FORMATADOR DE JSON PARA HTML ---
-        function formatJSON(obj) {
-            if (typeof obj !== 'object' || obj === null) return obj;
+        // Fecha modal ao clicar fora
+        document.getElementById('opModal').addEventListener('click', (e) => {
+            if(e.target.id === 'opModal') closeModal();
+        });
+
+        // --- LÓGICA DE TERMINAL (PRINT) ---
+        function logToTerminal(text, type = 'info') {
+            const term = document.getElementById('terminalOutput');
+            let colorClass = 'log-info';
+            if (type === 'success') colorClass = 'log-success';
+            if (type === 'error') colorClass = 'log-error';
             
-            let html = '<table class="result-table">';
-            for (let key in obj) {
-                let value = obj[key];
-                
-                if (typeof value === 'object' && value !== null) {
-                    // Recursão para objetos aninhados
-                    value = formatJSON(value); 
-                } else if (typeof value === 'string') {
-                    value = `<span class="json-string">"${value}"</span>`;
-                } else if (typeof value === 'number') {
-                    value = `<span class="json-number">${value}</span>`;
-                } else if (typeof value === 'boolean') {
-                    value = `<span class="json-boolean">${value}</span>`;
-                }
-
-                html += `<tr><th>${key}</th><td>${value}</td></tr>`;
-            }
-            html += '</table>';
-            return html;
+            term.innerHTML += `\n<span class="${colorClass}">${text}</span>`;
+            term.scrollTop = term.scrollHeight;
         }
 
-        // --- FUNÇÃO DE REQUISIÇÃO CENTRALIZADA ---
-        async function sendRequest(endpoint, data, btnElement) {
-            const originalText = btnElement.innerHTML;
-            btnElement.innerHTML = '<div class="loader" style="display:block; border-color: white; border-top-color: transparent; width: 20px; height: 20px;"></div>';
-            btnElement.disabled = true;
+        function jsonToTerminal(obj) {
+            const term = document.getElementById('terminalOutput');
+            // Formatação bonita de JSON para parecer código
+            const jsonStr = JSON.stringify(obj, null, 2);
+            // Colorir chaves e strings via Regex simples
+            const coloredJson = jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'log-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'log-key';
+                    } else {
+                        cls = 'log-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'log-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'log-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+            term.innerHTML += `\n${coloredJson}`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        // --- EXECUÇÃO ---
+        async function executeAction() {
+            const btn = document.getElementById('btnExecute');
+            const originalText = btn.innerText;
+            btn.innerText = 'Processando...';
+            btn.disabled = true;
+
+            const subId = document.getElementById('inpSubId').value;
+            const msisdn = document.getElementById('inpMsisdn').value;
+
+            logToTerminal('----------------------------------------');
+            logToTerminal(`> Iniciando execução: ${currentMode.toUpperCase()}`);
+            logToTerminal(`> Timestamp: ${new Date().toLocaleTimeString()}`);
+            
+            let endpoint = '';
+            let payload = {};
+
+            // Monta payload
+            if (currentMode === 'insert') {
+                endpoint = '/insert';
+                payload = { subscriber_id: subId, msisdn: msisdn };
+            } else if (currentMode === 'delete') {
+                endpoint = '/delete';
+                payload = { msisdn: msisdn };
+            } else {
+                endpoint = '/sps_flow';
+                payload = { subscriber_id: subId, op_type: currentMode === 'sps_refresh' ? 'REFRESH' : 'CANSUB' };
+            }
 
             try {
+                logToTerminal(`> Enviando request para ${endpoint}...`);
                 const response = await fetch(`${BASE_URL}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
 
                 if (response.ok && result.status === 'success') {
-                    let displayContent = '';
-                    
-                    // Personaliza exibição baseada no retorno
-                    if(result.customer_data) {
-                        displayContent += '<h3>Dados do Cliente:</h3>' + formatJSON(result.customer_data);
-                    }
-                    if(result.result) {
-                         displayContent += '<h3>Dados SPS:</h3>' + formatJSON(result.result);
-                    }
-                    // Fallback para resposta genérica
-                    displayContent += '<h3>Resposta do Servidor:</h3>' + formatJSON(result.response || result);
-
-                    showModal('✅ Sucesso!', displayContent);
+                    logToTerminal('> SUCESSO! Resposta do servidor:', 'success');
+                    jsonToTerminal(result);
                 } else {
-                    const errorMsg = result.message || 'Erro desconhecido';
-                    const details = result.details ? `<br><div style="background:#eee; padding:10px; border-radius:5px; margin-top:10px;">${result.details}</div>` : '';
-                    showModal('❌ Erro na Operação', `<p>${errorMsg}</p>${details}`, true);
+                    logToTerminal('> ERRO! Falha na operação:', 'error');
+                    jsonToTerminal(result);
                 }
 
             } catch (error) {
-                showModal('❌ Erro de Conexão', `<p>Não foi possível contatar o servidor local.</p><p>Verifique se o python app_backend.py está rodando.</p><p>${error.message}</p>`, true);
+                logToTerminal(`> ERRO DE CONEXÃO: ${error.message}`, 'error');
             } finally {
-                btnElement.innerHTML = originalText;
-                btnElement.disabled = false;
+                logToTerminal('> Processo finalizado.');
+                logToTerminal('----------------------------------------');
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
-        }
-
-        // --- TRIGGERS DOS BOTÕES ---
-        function runInsertFlow() {
-            const subId = document.getElementById('subIdInsert').value;
-            const msisdn = document.getElementById('msisdnInsert').value;
-            if (!subId || !msisdn) return alert('Preencha todos os campos!');
-            sendRequest('/insert', { subscriber_id: subId, msisdn: msisdn }, event.currentTarget);
-        }
-
-        function runDeleteFlow() {
-            const msisdn = document.getElementById('msisdnInsert').value;
-            if (!msisdn) return alert('Preencha o MSISDN!');
-            if(!confirm('Tem certeza que deseja cancelar este número?')) return;
-            sendRequest('/delete', { msisdn: msisdn }, event.currentTarget);
-        }
-
-        function runSPSFlow(op_type) {
-            const subId = document.getElementById('subIdSPS').value;
-            if (!subId) return alert('Preencha o SubscriberID!');
-            sendRequest('/sps_flow', { subscriber_id: subId, op_type: op_type }, event.currentTarget);
         }
     </script>
 </body>
