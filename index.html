@@ -6,37 +6,44 @@
     <title>MVNO Ops Board</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-body: linear-gradient(-45deg, #1f1c2c, #4b1248, #2c3e50, #000000); --board-bg: #101204; --card-bg: #22272b; --text-color: #b6c2cf; --modal-bg: #323940; --terminal-bg: #0d1117; --btn-primary: #579dff; --btn-danger: #ff4d4d; --label-yellow: #f2d600; --label-red: #eb5a46; --label-green: #61bd4f; --label-purple: #c377e0; --label-orange: #ff9f1a; --label-blue: #0079bf; }
+        :root { --bg-body: linear-gradient(-45deg, #1f1c2c, #4b1248, #2c3e50, #000000); --board-bg: #101204; --card-bg: #22272b; --text-color: #b6c2cf; --modal-bg: #323940; --terminal-bg: #0d1117; --btn-primary: #579dff; --btn-danger: #ff4d4d; --label-yellow: #f2d600; --label-red: #eb5a46; --label-green: #61bd4f; --label-purple: #c377e0; --label-orange: #ff9f1a; --label-blue: #0079bf; --label-custom: #ff8ed4; }
         body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; height: 100vh; background: var(--bg-body); background-size: 400% 400%; animation: gradientAnim 15s ease infinite; color: var(--text-color); overflow: hidden; display: flex; flex-direction: column; }
         @keyframes gradientAnim { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .board-header { background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); padding: 12px 24px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;}
         .board-title { font-weight: 700; font-size: 1.2rem; color: #fff; margin-right: 15px; }
         .board-badge { background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; color: #fff; font-weight: 600; }
         .board-canvas { flex-grow: 1; padding: 20px; overflow-x: auto; display: flex; align-items: flex-start; gap: 16px; }
-        .list-wrapper { width: 300px; flex-shrink: 0; background-color: var(--board-bg); border-radius: 12px; padding: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
-        .list-header { padding: 4px 8px 12px 8px; font-weight: 600; font-size: 0.95rem; color: #fff; }
-        .list-cards { display: flex; flex-direction: column; gap: 8px; }
-        .card { background-color: var(--card-bg); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: background 0.2s; border: 1px solid transparent; }
+        .list-wrapper { width: 300px; flex-shrink: 0; background-color: var(--board-bg); border-radius: 12px; padding: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; max-height: 90vh;}
+        .list-header { padding: 4px 8px 12px 8px; font-weight: 600; font-size: 0.95rem; color: #fff; display: flex; justify-content: space-between; align-items: center;}
+        .list-cards { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .card { background-color: var(--card-bg); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: background 0.2s; border: 1px solid transparent; position: relative; }
         .card:hover { background-color: #2c333a; border-color: #579dff; }
         .card-label { width: 40px; height: 8px; border-radius: 4px; margin-bottom: 6px; display: block; }
-        .lbl-yellow { background-color: var(--label-yellow); } .lbl-red { background-color: var(--label-red); } .lbl-green { background-color: var(--label-green); } .lbl-purple { background-color: var(--label-purple); } .lbl-orange { background-color: var(--label-orange); } .lbl-blue { background-color: var(--label-blue); }
+        .lbl-yellow { background-color: var(--label-yellow); } .lbl-red { background-color: var(--label-red); } .lbl-green { background-color: var(--label-green); } .lbl-purple { background-color: var(--label-purple); } .lbl-orange { background-color: var(--label-orange); } .lbl-blue { background-color: var(--label-blue); } .lbl-custom { background-color: var(--label-custom); }
         .card-title { color: #dcdfe4; font-size: 0.95rem; display: block; }
         .card-footer { display: flex; gap: 10px; margin-top: 8px; font-size: 0.75rem; color: #8c9bab; }
         .icon-sm { display: inline-block; width: 14px; height: 14px; background-color: rgba(255,255,255,0.1); border-radius: 2px; }
-        
-        /* MODAL */
+        .add-btn { background: rgba(255,255,255,0.1); border: none; color: #9fadbc; padding: 8px; border-radius: 4px; width: 100%; cursor: pointer; margin-top: 10px; text-align: left; font-size: 0.9rem; transition: 0.2s; }
+        .add-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .delete-card-btn { position: absolute; top: 5px; right: 5px; color: #666; font-size: 12px; opacity: 0; transition: 0.2s; }
+        .card:hover .delete-card-btn { opacity: 1; }
+        .delete-card-btn:hover { color: #ff4d4d; }
+
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; backdrop-filter: blur(5px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         .modal-window { background-color: var(--modal-bg); width: 90%; max-width: 1100px; height: 80vh; max-height: 700px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: flex; overflow: hidden; transform: translateY(-20px); transition: transform 0.3s; }
         .modal-overlay.active .modal-window { transform: translateY(0); }
         
+        /* Small Modal para Adicionar */
+        .modal-window-small { background-color: var(--modal-bg); width: 400px; height: auto; padding: 25px; border-radius: 12px; transform: translateY(-20px); transition: transform 0.3s; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);}
+        .modal-overlay.active .modal-window-small { transform: translateY(0); }
+
         .modal-main { width: 350px; flex-shrink: 0; padding: 24px; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; background-color: var(--modal-bg); overflow-y: auto; }
         .modal-title { font-size: 1.3rem; font-weight: 600; color: #dcdfe4; margin: 0 0 5px 0; }
         .modal-subtitle { font-size: 0.85rem; color: #9fadbc; margin-bottom: 25px; }
         .form-label { display: block; font-weight: 600; font-size: 0.8rem; color: #9fadbc; margin-bottom: 8px; text-transform: uppercase; }
         .input-trello { width: 100%; background: rgba(0,0,0,0.2); border: 2px solid transparent; border-radius: 3px; padding: 10px; color: #dcdfe4; font-size: 0.95rem; margin-bottom: 15px; box-sizing: border-box; }
         .input-trello:focus { outline: none; border-color: #579dff; background: #22272b; }
-        
         .action-area { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
         .btn-action { background-color: var(--btn-primary); color: #1d2125; font-weight: 600; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1rem; transition: background 0.2s; }
         .btn-action:hover { filter: brightness(1.1); }
@@ -44,7 +51,6 @@
         .btn-action.btn-massive { background-color: var(--label-orange); color: #1d2125; }
         #btnStop { background-color: var(--btn-danger); color: white; font-weight: 600; padding: 12px; border: none; border-radius: 4px; cursor: pointer; width: 100%; display: none; }
         #btnStop:hover { filter: brightness(1.1); }
-        
         .modal-sidebar { flex-grow: 1; background-color: #2a2f35; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
         .sidebar-title { font-size: 0.8rem; font-weight: 600; color: #9fadbc; margin-bottom: 12px; text-transform: uppercase; flex-shrink: 0; }
         .terminal-view { flex-grow: 1; background-color: var(--terminal-bg); border-radius: 6px; padding: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; line-height: 1.4; color: #c9d1d9; overflow-y: auto; height: 100%; white-space: pre-wrap; word-wrap: break-word; border: 1px solid #30363d; }
@@ -79,11 +85,17 @@
                 <div class="card" onclick="openModal('change_massive')"><span class="card-label lbl-blue"></span><span class="card-title">SPS Change - Massivo</span><div class="card-footer"><span class="icon-sm"></span> tr_sps_change 2 1.py</div></div>
             </div>
         </div>
+        <div class="list-wrapper">
+            <div class="list-header">Scripts Manuais</div>
+            <div class="list-cards" id="customCardsContainer">
+                </div>
+            <button class="add-btn" onclick="openAddScriptModal()">+ Adicionar Script</button>
+        </div>
     </div>
 
     <div class="modal-overlay" id="opModal">
         <div class="modal-window">
-            <button class="close-modal" onclick="closeModal()">×</button>
+            <button class="close-modal" onclick="closeModal('opModal')">×</button>
             <div class="modal-main">
                 <div><h2 class="modal-title" id="modalTitle">Título</h2><p class="modal-subtitle" id="modalSub">Detalhes.</p></div>
                 <div id="formInputs">
@@ -102,17 +114,87 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-window-small">
+            <button class="close-modal" onclick="closeModal('addModal')">×</button>
+            <h2 class="modal-title">Adicionar Novo Script</h2>
+            <input type="text" class="input-trello" id="newScriptName" placeholder="Ex: busca_cep.py">
+            <button class="btn-action" onclick="addCustomCard()">Salvar Cartão</button>
+        </div>
+    </div>
+
     <script>
         const BASE_URL = 'http://localhost:5000/api';
-        let currentMode = '', streamReader = null; 
+        let currentMode = '', currentScriptName = '', streamReader = null; 
 
-        function openModal(mode) {
-            currentMode = mode; const modal = document.getElementById('opModal'); const formInputs = document.getElementById('formInputs');
+        // --- GERENCIAMENTO DE SCRIPTS PERSONALIZADOS ---
+        function loadSavedScripts() {
+            const container = document.getElementById('customCardsContainer');
+            const saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
+            container.innerHTML = '';
+            
+            saved.forEach(scriptName => {
+                createCardElement(scriptName);
+            });
+        }
+
+        function createCardElement(name) {
+            const container = document.getElementById('customCardsContainer');
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = (e) => {
+                // Evita abrir modal se clicar no botão de deletar
+                if (e.target.classList.contains('delete-card-btn')) return;
+                openModal('custom', name);
+            };
+            
+            card.innerHTML = `
+                <span class="delete-card-btn" onclick="removeCustomCard('${name}')">✕</span>
+                <span class="card-label lbl-custom"></span>
+                <span class="card-title">${name}</span>
+                <div class="card-footer"><span class="icon-sm"></span> Manual</div>
+            `;
+            container.appendChild(card);
+        }
+
+        function addCustomCard() {
+            const input = document.getElementById('newScriptName');
+            const name = input.value.trim();
+            if (!name.endsWith('.py')) { alert('O nome deve terminar com .py'); return; }
+            
+            let saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
+            if (!saved.includes(name)) {
+                saved.push(name);
+                localStorage.setItem('customScripts', JSON.stringify(saved));
+                createCardElement(name);
+            }
+            input.value = '';
+            closeModal('addModal');
+        }
+
+        function removeCustomCard(name) {
+            if(!confirm(`Remover o cartão "${name}"?`)) return;
+            let saved = JSON.parse(localStorage.getItem('customScripts') || '[]');
+            saved = saved.filter(s => s !== name);
+            localStorage.setItem('customScripts', JSON.stringify(saved));
+            loadSavedScripts();
+        }
+
+        // Carrega ao iniciar
+        loadSavedScripts();
+
+        // --- MODAIS E EXECUÇÃO ---
+        function openAddScriptModal() { document.getElementById('addModal').classList.add('active'); }
+
+        function openModal(mode, scriptName = '') {
+            currentMode = mode; currentScriptName = scriptName;
+            const modal = document.getElementById('opModal'); const formInputs = document.getElementById('formInputs');
             const title = document.getElementById('modalTitle'); const btn = document.getElementById('btnExecute'); 
             const btnStop = document.getElementById('btnStop'); const term = document.getElementById('terminalOutput');
             
             term.innerHTML = '<span class="log-info">// Conectado. Aguardando...</span>';
             document.getElementById('inpSubId').value = ''; document.getElementById('inpMsisdn').value = '';
+            
             formInputs.style.display = 'block'; document.getElementById('inpSubId').style.display = 'block'; document.getElementById('inpMsisdn').style.display = 'block';
             btn.className = 'btn-action'; btnStop.style.display = 'none';
 
@@ -120,13 +202,19 @@
             else if (mode === 'delete') { title.innerText = 'Cancelamento'; document.getElementById('inpSubId').style.display = 'none'; btn.className += ' btn-delete'; btn.innerText = 'Executar Cancelamento'; }
             else if (mode.startsWith('sps_')) { title.innerText = 'Fluxo SPS'; document.getElementById('inpMsisdn').style.display = 'none'; btn.innerText = 'Executar'; }
             else if (mode.endsWith('_massive')) { title.innerText = 'Execução Massiva'; formInputs.style.display = 'none'; btn.className += ' btn-massive'; btn.innerText = 'Iniciar Processamento'; }
+            else if (mode === 'custom') {
+                title.innerText = scriptName; 
+                document.getElementById('modalSub').innerText = 'Execução de script manual na raiz.';
+                formInputs.style.display = 'none'; 
+                btn.className += ' btn-massive';
+                btn.innerText = 'Rodar Script';
+            }
             modal.classList.add('active');
         }
-        
-        function closeModal() { document.getElementById('opModal').classList.remove('active'); }
-        document.getElementById('opModal').addEventListener('click', (e) => { 
-            if(e.target.id === 'opModal') closeModal(); 
-        });
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.getElementById('opModal').addEventListener('click', (e) => { if(e.target.id === 'opModal') closeModal('opModal'); });
+        document.getElementById('addModal').addEventListener('click', (e) => { if(e.target.id === 'addModal') closeModal('addModal'); });
         
         function cleanANSI(text) {
             if (!text) return '';
@@ -134,15 +222,8 @@
             return text.replace(/\u001b\[[0-9;]*m/g, '');
         }
 
-        function logToTerminal(text) {
-            const term = document.getElementById('terminalOutput');
-            term.innerHTML += `<div><span style="color:#8b949e">> ${text}</span></div>`;
-            term.scrollTop = term.scrollHeight;
-        }
-
         async function stopExecution() {
             if(streamReader) await streamReader.cancel();
-            logToTerminal('Parando...');
             await fetch(`${BASE_URL}/stop_massive`, { method: 'POST' });
             document.getElementById('btnExecute').disabled = false; document.getElementById('btnExecute').innerText = 'Iniciar'; document.getElementById('btnStop').style.display = 'none';
         }
@@ -150,16 +231,25 @@
         async function executeAction() {
             const btn = document.getElementById('btnExecute'); const btnStop = document.getElementById('btnStop'); const term = document.getElementById('terminalOutput');
             btn.innerText = '...'; btn.disabled = true; term.innerHTML = '';
-            const payload = { subscriber_id: document.getElementById('inpSubId').value, msisdn: document.getElementById('inpMsisdn').value, script_type: currentMode };
-            const endpoint = currentMode.endsWith('_massive') ? '/run_massive' : (currentMode === 'insert' ? '/insert' : (currentMode === 'delete' ? '/delete' : '/sps_flow'));
+            const payload = { 
+                subscriber_id: document.getElementById('inpSubId').value, 
+                msisdn: document.getElementById('inpMsisdn').value, 
+                script_type: currentMode,
+                script_name: currentScriptName
+            };
+            
+            let endpoint = '';
+            if (currentMode === 'custom' || currentMode.endsWith('_massive')) endpoint = '/run_massive';
+            else if (currentMode === 'insert') endpoint = '/insert';
+            else if (currentMode === 'delete') endpoint = '/delete';
+            else endpoint = '/sps_flow';
 
-            if (currentMode.endsWith('_massive')) btnStop.style.display = 'block';
+            if (currentMode.endsWith('_massive') || currentMode === 'custom') btnStop.style.display = 'block';
 
             try {
                 const response = await fetch(`${BASE_URL}${endpoint}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
                 streamReader = response.body.getReader();
                 const decoder = new TextDecoder();
-                
                 while(true) {
                     const {done, value} = await streamReader.read();
                     if(done) break;
@@ -167,7 +257,7 @@
                     term.innerHTML += cleanANSI(chunk);
                     term.scrollTop = term.scrollHeight;
                 }
-            } catch (e) { logToTerminal(e.message); }
+            } catch (e) { term.innerHTML += `<div><span style="color:#ff7b72">Error: ${e.message}</span></div>`; }
             finally { btn.disabled = false; btn.innerText = 'Executar'; btnStop.style.display = 'none'; }
         }
     </script>
