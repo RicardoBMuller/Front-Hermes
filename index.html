@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MVNO Ops Board</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-body: linear-gradient(-45deg, #1f1c2c, #4b1248, #2c3e50, #000000);
@@ -50,9 +50,10 @@
         .card-footer { display: flex; gap: 10px; margin-top: 8px; font-size: 0.75rem; color: #8c9bab; }
         .icon-sm { display: inline-block; width: 14px; height: 14px; background-color: rgba(255,255,255,0.1); border-radius: 2px; }
 
+        /* MODAL STYLING */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: flex-start; padding-top: 60px; z-index: 999; opacity: 0; visibility: hidden; transition: all 0.2s; backdrop-filter: blur(5px); }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-window { background-color: var(--modal-bg); width: 900px; min-height: 550px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: grid; grid-template-columns: 1fr 2fr; overflow: hidden; transform: translateY(-20px); transition: transform 0.3s; }
+        .modal-window { background-color: var(--modal-bg); width: 950px; height: 600px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); display: grid; grid-template-columns: 1fr 2.5fr; overflow: hidden; transform: translateY(-20px); transition: transform 0.3s; }
         .modal-overlay.active .modal-window { transform: translateY(0); }
 
         .modal-main { padding: 24px; border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; }
@@ -68,9 +69,34 @@
         .btn-action.btn-delete { background-color: var(--label-red); color: white; }
         .btn-action.btn-massive { background-color: var(--label-orange); color: #1d2125; }
 
-        .modal-sidebar { background-color: #2a2f35; padding: 20px; display: flex; flex-direction: column; }
-        .sidebar-title { font-size: 0.8rem; font-weight: 600; color: #9fadbc; margin-bottom: 12px; text-transform: uppercase; }
-        .terminal-view { flex-grow: 1; background-color: var(--terminal-bg); border-radius: 6px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #c9d1d9; overflow-y: auto; white-space: pre-wrap; border: 1px solid #30363d; height: 100%; }
+        /* TERMINAL STYLING (CORRIGIDO) */
+        .modal-sidebar { background-color: #2a2f35; padding: 20px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;}
+        .sidebar-title { font-size: 0.8rem; font-weight: 600; color: #9fadbc; margin-bottom: 12px; text-transform: uppercase; flex-shrink: 0; }
+        
+        .terminal-view { 
+            flex-grow: 1; 
+            background-color: var(--terminal-bg); 
+            border-radius: 6px; 
+            padding: 15px; 
+            font-family: 'Consolas', 'Monaco', monospace; /* Fonte mais limpa */
+            font-size: 0.85rem; 
+            line-height: 1.4;
+            color: #c9d1d9; 
+            
+            /* Scroll e Overflow Corrigidos */
+            overflow-y: auto; 
+            white-space: pre-wrap; /* Mantém quebras de linha e espaços */
+            word-wrap: break-word; /* Quebra palavras longas */
+            border: 1px solid #30363d; 
+            height: 100%; 
+            box-sizing: border-box;
+        }
+
+        /* Scrollbar Personalizado */
+        .terminal-view::-webkit-scrollbar { width: 10px; }
+        .terminal-view::-webkit-scrollbar-track { background: #0d1117; }
+        .terminal-view::-webkit-scrollbar-thumb { background: #30363d; border-radius: 5px; }
+        .terminal-view::-webkit-scrollbar-thumb:hover { background: #579dff; }
 
         .log-key { color: #79c0ff; } .log-string { color: #a5d6ff; } .log-success { color: #7ee787; font-weight: bold; } .log-error { color: #ff7b72; font-weight: bold; } .log-info { color: #8b949e; }
         .close-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #9fadbc; font-size: 1.5rem; cursor: pointer; }
@@ -153,7 +179,7 @@
             </div>
             <div class="modal-sidebar">
                 <div class="sidebar-title">Terminal Output</div>
-                <div class="terminal-view" id="terminalOutput"><span class="log-info">// Ready.</span></div>
+                <div class="terminal-view" id="terminalOutput"><span class="log-info">// Aguardando...</span></div>
             </div>
         </div>
     </div>
@@ -211,10 +237,21 @@
         function closeModal() { document.getElementById('opModal').classList.remove('active'); }
         document.getElementById('opModal').addEventListener('click', (e) => { if(e.target.id === 'opModal') closeModal(); });
 
+        // --- REMOVE ANSI CODES (LIMPEZA DE CORES ESTRANHAS) ---
+        function cleanANSI(text) {
+            // Regex para remover códigos de escape ANSI (ex: \033[92m)
+            return text.replace(/\u001b\[[0-9;]*m/g, '');
+        }
+
         function logToTerminal(text, type = 'info') {
             const term = document.getElementById('terminalOutput');
             const cls = type === 'success' ? 'log-success' : type === 'error' ? 'log-error' : 'log-info';
-            term.innerHTML += `\n<span class="${cls}">${text}</span>`;
+            
+            // Adiciona timestamp simples
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            term.innerHTML += `<div><span style="color:#555">[${time}]</span> <span class="${cls}">${cleanANSI(text)}</span></div>`;
+            
+            // Auto-scroll sempre para o final
             term.scrollTop = term.scrollHeight;
         }
 
@@ -228,11 +265,10 @@
                 else if (/null/.test(match)) cls = 'log-error';
                 return '<span class="' + cls + '">' + match + '</span>';
             });
-            term.innerHTML += `\n${coloredJson}`;
+            term.innerHTML += `<div style="margin-top:10px;">${coloredJson}</div>`;
             term.scrollTop = term.scrollHeight;
         }
 
-        // --- FUNÇÃO PRINCIPAL DE EXECUÇÃO ---
         async function executeAction() {
             const btn = document.getElementById('btnExecute');
             const originalText = btn.innerText;
@@ -242,17 +278,16 @@
             const subId = document.getElementById('inpSubId').value;
             const msisdn = document.getElementById('inpMsisdn').value;
 
-            logToTerminal('----------------------------------------');
-            logToTerminal(`> Iniciando: ${currentMode.toUpperCase()}`);
+            // Limpa terminal se for execução nova
+            if(!term.innerHTML.includes("Executando")) term.innerHTML = "";
             
-            // LOGICA PARA SCRIPT MASSIVO (STREAMING REAL-TIME)
+            logToTerminal(`>>> Iniciando: ${currentMode.toUpperCase()}`);
+            
+            // MASSIVE STREAMING
             if (currentMode.endsWith('_massive')) {
                 try {
-                    logToTerminal(`> Conectando ao stream...`);
                     const response = await fetch(`${BASE_URL}/run_massive`, {
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ script_type: currentMode })
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ script_type: currentMode })
                     });
 
                     const reader = response.body.getReader();
@@ -261,45 +296,47 @@
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
-                        // Decodifica e adiciona ao terminal instantaneamente
                         const chunk = decoder.decode(value, { stream: true });
-                        term.innerHTML += chunk; // Adiciona o texto bruto
-                        term.scrollTop = term.scrollHeight; // Auto-scroll
+                        
+                        // Limpa ANSI e insere no HTML
+                        const cleanChunk = cleanANSI(chunk);
+                        // Usa innerText para evitar injeção HTML do log, mas preserva quebra de linha
+                        term.innerText += cleanChunk; 
+                        term.scrollTop = term.scrollHeight;
                     }
-                    logToTerminal('> Processo finalizado.', 'success');
+                    logToTerminal('>>> Processo finalizado.', 'success');
 
                 } catch (error) {
-                    logToTerminal(`> ERRO DE STREAM: ${error.message}`, 'error');
+                    logToTerminal(`ERRO: ${error.message}`, 'error');
                 } finally {
                     btn.innerText = originalText; btn.disabled = false;
                 }
-                return; // Sai da função pois já tratou o massivo
+                return;
             }
 
-            // LOGICA PARA REQUISIÇÕES PADRÃO (JSON)
+            // PADRÃO JSON
             let endpoint = '', payload = {};
             if (currentMode === 'insert') { endpoint = '/insert'; payload = { subscriber_id: subId, msisdn: msisdn }; }
             else if (currentMode === 'delete') { endpoint = '/delete'; payload = { msisdn: msisdn }; }
             else if (currentMode.startsWith('sps_')) { endpoint = '/sps_flow'; payload = { subscriber_id: subId, op_type: currentMode === 'sps_refresh' ? 'REFRESH' : 'CANSUB' }; }
 
             try {
-                logToTerminal(`> Request: ${endpoint}...`);
                 const response = await fetch(`${BASE_URL}${endpoint}`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
                 const result = await response.json();
 
                 if (response.ok && result.status === 'success') {
-                    logToTerminal('> SUCESSO!', 'success');
+                    logToTerminal('SUCESSO! Resposta:', 'success');
                     jsonToTerminal(result);
                 } else {
-                    logToTerminal('> FALHA!', 'error');
+                    logToTerminal('FALHA!', 'error');
                     jsonToTerminal(result);
                 }
             } catch (error) {
-                logToTerminal(`> ERRO DE CONEXÃO: ${error.message}`, 'error');
+                logToTerminal(`ERRO DE CONEXÃO: ${error.message}`, 'error');
             } finally {
-                logToTerminal('> Fim.');
+                logToTerminal('>>> Fim.');
                 btn.innerText = originalText; btn.disabled = false;
             }
         }
