@@ -24,8 +24,7 @@
             background: var(--bg-body);
             color: var(--text-color);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
 
         /* HEADER */
@@ -34,9 +33,7 @@
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(5px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .header h1 { font-size: 1.2rem; margin: 0; color: #fff; }
         .add-btn-header {
@@ -46,61 +43,38 @@
         }
         .add-btn-header:hover { filter: brightness(1.1); }
 
-        /* CONTAINER PRINCIPAL */
+        /* CONTAINER DE CARDS */
         .main-container {
-            flex-grow: 1;
-            padding: 30px;
-            overflow-y: auto;
+            flex-grow: 1; padding: 30px; overflow-y: auto;
         }
-
         .grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px; max-width: 1200px; margin: 0 auto;
         }
 
-        /* CARD ESTILO TRELLO */
+        /* CARDS */
         .card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            position: relative;
-            transition: transform 0.2s, border-color 0.2s;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            height: 140px;
+            background: var(--card-bg); border-radius: 8px; padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative; transition: transform 0.2s, border-color 0.2s;
+            cursor: pointer; display: flex; flex-direction: column; height: 140px;
         }
         .card:hover { transform: translateY(-3px); border-color: var(--primary); }
-
-        .card-tag {
-            width: 40px; height: 6px; background: #d2a8ff; border-radius: 3px; margin-bottom: 10px;
-        }
+        .card-tag { width: 40px; height: 6px; background: #d2a8ff; border-radius: 3px; margin-bottom: 10px; }
         .card h3 { margin: 0 0 5px 0; color: #fff; font-size: 1rem; }
         .card p { margin: 0; font-size: 0.85rem; color: #8b949e; flex-grow: 1; }
         .card-footer {
-            margin-top: auto;
-            font-size: 0.75rem;
-            color: #58a6ff;
-            font-family: 'Consolas', monospace;
-            background: rgba(88, 166, 255, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            align-self: flex-start;
+            margin-top: auto; font-size: 0.75rem; color: #58a6ff;
+            font-family: 'Consolas', monospace; background: rgba(88, 166, 255, 0.1);
+            padding: 4px 8px; border-radius: 4px; align-self: flex-start;
         }
-
         .delete-btn {
-            position: absolute; top: 10px; right: 10px;
-            background: transparent; border: none; color: #484f58;
-            font-size: 1.2rem; cursor: pointer; transition: 0.2s;
+            position: absolute; top: 10px; right: 10px; background: transparent;
+            border: none; color: #484f58; font-size: 1.2rem; cursor: pointer; transition: 0.2s;
         }
         .delete-btn:hover { color: var(--danger); }
 
-        /* MODAL GERAL */
+        /* MODAL */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
@@ -109,7 +83,6 @@
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
 
-        /* MODAL ADICIONAR */
         .modal-small {
             background: var(--modal-bg); width: 400px; padding: 25px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
@@ -124,41 +97,41 @@
         }
         input:focus { border-color: var(--primary); }
 
-        /* MODAL TERMINAL */
+        /* TERMINAL MODAL */
         .modal-large {
-            background: var(--modal-bg); width: 90%; max-width: 1000px; height: 80vh;
+            background: var(--modal-bg); width: 90%; max-width: 1000px; height: 85vh;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             display: flex; flex-direction: column; overflow: hidden;
-            transform: scale(0.95); transition: 0.3s;
+            transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .modal-overlay.active .modal-large { transform: scale(1); }
 
         .term-header {
             padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
         }
         .term-title { font-weight: 600; color: #fff; }
         .btn-close { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
         .btn-close:hover { color: #fff; }
 
+        /* CORPO DO TERMINAL */
         .term-body {
             flex-grow: 1; padding: 15px; overflow-y: auto;
             background: var(--terminal-bg); font-family: 'Consolas', monospace;
-            font-size: 0.9rem; line-height: 1.5; color: #c9d1d9;
+            font-size: 0.95rem; line-height: 1.4; color: #c9d1d9;
             white-space: pre-wrap; word-wrap: break-word;
         }
-        
-        /* Scrollbar Terminal */
         .term-body::-webkit-scrollbar { width: 10px; }
         .term-body::-webkit-scrollbar-track { background: #0d1117; }
         .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 5px; }
 
+        /* RODAPÉ DE INPUT */
         .term-footer {
             padding: 10px 20px; background: #161b22; border-top: 1px solid #30363d;
-            display: flex; gap: 10px; align-items: center;
+            display: flex; gap: 10px; align-items: center; flex-shrink: 0;
         }
-        .prompt { color: var(--primary); font-weight: bold; }
-        #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; }
+        .prompt { color: var(--success); font-weight: bold; }
+        #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; color: #fff; font-size: 1rem;}
         
         .btn-stop {
             background: var(--danger); color: #fff; border: none;
@@ -166,7 +139,7 @@
         }
         .btn-stop:hover { opacity: 0.9; }
 
-        /* CORES DO LOG */
+        /* CORES ANSI SIMULADAS */
         .ansi-red { color: #ff7b72; }
         .ansi-green { color: #3fb950; }
         .ansi-yellow { color: #d29922; }
@@ -174,6 +147,7 @@
         .ansi-magenta { color: #bc8cff; }
         .ansi-cyan { color: #39c5cf; }
         .ansi-bold { font-weight: bold; }
+        .user-input-echo { color: #fff; font-weight: bold; margin-top: 5px; margin-bottom: 5px; }
 
     </style>
 </head>
@@ -181,27 +155,26 @@
 
     <div class="header">
         <h1>Python Script Runner</h1>
-        <button class="add-btn-header" onclick="openAddModal()">+ Novo Script</button>
+        <button class="add-btn-header" onclick="openAddModal()">+ Adicionar Script</button>
     </div>
 
     <div class="main-container">
         <div id="cardsContainer" class="grid-cards">
             </div>
-        
         <div id="emptyState" style="text-align:center; color:#666; margin-top:50px; display:none;">
-            Nenhum script adicionado. Clique em "+ Novo Script" para começar.
+            Nenhum script. Adicione um para começar.
         </div>
     </div>
 
     <div class="modal-overlay" id="modalAdd">
         <div class="modal-small">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="margin:0; color:#fff;">Adicionar Script</h2>
+                <h2 style="margin:0; color:#fff;">Novo Script</h2>
                 <button class="btn-close" onclick="closeModal('modalAdd')">×</button>
             </div>
-            <input type="text" id="newTitle" placeholder="Título (Ex: Busca CEP)">
-            <input type="text" id="newDesc" placeholder="Descrição (Ex: Valida lista de ceps)">
-            <input type="text" id="newFile" placeholder="Nome do Arquivo (Ex: script.py)">
+            <input type="text" id="newTitle" placeholder="Título (ex: Atualiza Dados)">
+            <input type="text" id="newDesc" placeholder="Descrição (ex: Script de automação)">
+            <input type="text" id="newFile" placeholder="Arquivo (ex: script.py)">
             <button class="add-btn-header" style="width:100%" onclick="saveScript()">Salvar</button>
         </div>
     </div>
@@ -209,14 +182,13 @@
     <div class="modal-overlay" id="modalTerm">
         <div class="modal-large">
             <div class="term-header">
-                <div class="term-title" id="termTitle">Executando...</div>
+                <div class="term-title" id="termTitle">Terminal</div>
                 <button class="btn-close" onclick="closeTerminal()">×</button>
             </div>
-            <div class="term-body" id="termOutput">
-                </div>
+            <div class="term-body" id="termOutput"></div>
             <div class="term-footer">
-                <span class="prompt">$</span>
-                <input type="text" id="cmdInput" placeholder="Digite um comando e pressione Enter..." autocomplete="off">
+                <span class="prompt">>></span>
+                <input type="text" id="cmdInput" placeholder="Digite aqui..." autocomplete="off">
                 <button class="btn-stop" id="btnStop" onclick="stopScript()">PARAR</button>
             </div>
         </div>
@@ -227,26 +199,20 @@
         let streamReader = null;
         let isRunning = false;
 
-        // --- STORAGE & CARDS ---
+        // --- SISTEMA DE CARDS ---
         function loadScripts() {
             const container = document.getElementById('cardsContainer');
             const empty = document.getElementById('emptyState');
             const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
 
             container.innerHTML = '';
-            if (scripts.length === 0) {
-                empty.style.display = 'block';
-                return;
-            }
+            if (scripts.length === 0) { empty.style.display = 'block'; return; }
             empty.style.display = 'none';
 
             scripts.forEach((script, index) => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.onclick = (e) => {
-                    if(e.target.classList.contains('delete-btn')) return;
-                    runScript(script);
-                };
+                card.onclick = (e) => { if(!e.target.classList.contains('delete-btn')) runScript(script); };
                 card.innerHTML = `
                     <button class="delete-btn" onclick="deleteScript(${index})">×</button>
                     <div class="card-tag"></div>
@@ -262,54 +228,60 @@
             const title = document.getElementById('newTitle').value;
             const desc = document.getElementById('newDesc').value;
             const file = document.getElementById('newFile').value.trim();
-
-            if(!title || !file) return alert("Título e Arquivo são obrigatórios.");
-            if(!file.endsWith('.py')) return alert("O arquivo deve terminar com .py");
-
+            if(!title || !file) return alert("Preencha Título e Arquivo");
+            
             const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
             scripts.push({ title, desc, file });
             localStorage.setItem('myScripts', JSON.stringify(scripts));
             
-            document.getElementById('newTitle').value = '';
-            document.getElementById('newDesc').value = '';
-            document.getElementById('newFile').value = '';
-            
+            document.getElementById('newTitle').value = ''; document.getElementById('newDesc').value = ''; document.getElementById('newFile').value = '';
             closeModal('modalAdd');
             loadScripts();
         }
 
         function deleteScript(index) {
-            if(!confirm("Remover este atalho?")) return;
-            const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
-            scripts.splice(index, 1);
-            localStorage.setItem('myScripts', JSON.stringify(scripts));
-            loadScripts();
+            if(confirm("Remover script?")) {
+                const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
+                scripts.splice(index, 1);
+                localStorage.setItem('myScripts', JSON.stringify(scripts));
+                loadScripts();
+            }
         }
 
-        // --- EXECUÇÃO ---
+        // --- EXECUÇÃO E TERMINAL ---
         function runScript(script) {
             document.getElementById('modalTerm').classList.add('active');
             document.getElementById('termTitle').innerText = `Executando: ${script.title}`;
             const term = document.getElementById('termOutput');
-            term.innerHTML = '<div style="color:#8b949e">Conectando ao terminal...</div>';
-            
+            term.innerHTML = '<div style="color:#8b949e">Conectando...</div>';
+            document.getElementById('cmdInput').focus();
             startStream(script.file);
+        }
+
+        function cleanANSI(text) {
+            if (!text) return '';
+            text = text.replace(/\u001b\[31m/g, '<span class="ansi-red">')
+                       .replace(/\u001b\[32m/g, '<span class="ansi-green">')
+                       .replace(/\u001b\[33m/g, '<span class="ansi-yellow">')
+                       .replace(/\u001b\[34m/g, '<span class="ansi-blue">')
+                       .replace(/\u001b\[35m/g, '<span class="ansi-magenta">')
+                       .replace(/\u001b\[36m/g, '<span class="ansi-cyan">')
+                       .replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">')
+                       .replace(/\u001b\[1m/g, '<span class="ansi-bold">')
+                       .replace(/\u001b\[0m/g, '</span>')
+                       .replace(/\u001b\[[0-9;]*m/g, '');
+            return text;
         }
 
         async function startStream(filename) {
             const term = document.getElementById('termOutput');
-            const btnStop = document.getElementById('btnStop');
             isRunning = true;
-            btnStop.style.display = 'block';
 
             try {
                 const response = await fetch(`${BASE_URL}/run_script`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ script_name: filename })
                 });
-
-                if (!response.ok) throw new Error(`Erro ${response.status}: Arquivo não encontrado ou erro no servidor.`);
 
                 streamReader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -317,76 +289,52 @@
                 while(true) {
                     const { done, value } = await streamReader.read();
                     if (done) break;
-                    
                     const chunk = decoder.decode(value, {stream: true});
-                    // Processa e adiciona ao terminal
                     term.innerHTML += cleanANSI(chunk);
                     term.scrollTop = term.scrollHeight;
                 }
             } catch (e) {
-                term.innerHTML += `<div style="color:#ff7b72">\nErro: ${e.message}</div>`;
+                term.innerHTML += `<div class="ansi-red">\nErro: ${e.message}</div>`;
             } finally {
                 isRunning = false;
-                btnStop.style.display = 'none';
-                term.innerHTML += `<div style="color:#8b949e; margin-top:10px;">--- FIM DA EXECUÇÃO ---</div>`;
+                term.innerHTML += `<div style="color:#8b949e; margin-top:10px;">--- FIM ---</div>`;
                 term.scrollTop = term.scrollHeight;
             }
         }
 
-        async function stopScript() {
-            if(streamReader) await streamReader.cancel();
-            await fetch(`${BASE_URL}/stop_script`, { method: 'POST' });
-            document.getElementById('termOutput').innerHTML += `<div style="color:#f85149">\n>>> INTERROMPIDO PELO USUÁRIO</div>`;
-        }
-
-        // --- INPUT NO TERMINAL ---
+        // ENVIAR COMANDO
         document.getElementById('cmdInput').addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && isRunning) {
                 const val = e.target.value;
                 e.target.value = '';
                 
-                // Mostra visualmente o que foi digitado
+                // Mostra o que você digitou no log (Echo)
                 const term = document.getElementById('termOutput');
-                term.innerHTML += `<div style="color:#fff; font-weight:bold;">${val}</div>`;
-                
-                // Envia para o backend
+                term.innerHTML += `<div class="user-input-echo">${val}</div>`;
+                term.scrollTop = term.scrollHeight;
+
                 await fetch(`${BASE_URL}/send_input`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ input: val })
                 });
             }
         });
 
-        // --- UTILITÁRIOS ---
-        function cleanANSI(text) {
-            if (!text) return '';
-            text = text
-                .replace(/\u001b\[31m/g, '<span class="ansi-red">')
-                .replace(/\u001b\[32m/g, '<span class="ansi-green">')
-                .replace(/\u001b\[33m/g, '<span class="ansi-yellow">')
-                .replace(/\u001b\[34m/g, '<span class="ansi-blue">')
-                .replace(/\u001b\[35m/g, '<span class="ansi-magenta">')
-                .replace(/\u001b\[36m/g, '<span class="ansi-cyan">')
-                .replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">')
-                .replace(/\u001b\[1m/g, '<span class="ansi-bold">')
-                .replace(/\u001b\[0m/g, '</span>')
-                // Remove resíduos de clear screen ou cursor move se houver
-                .replace(/\u001b\[[0-9;]*[a-zA-Z]/g, ''); 
-            return text;
+        async function stopScript() {
+            if(streamReader) await streamReader.cancel();
+            await fetch(`${BASE_URL}/stop_script`, { method: 'POST' });
+            document.getElementById('termOutput').innerHTML += `<div class="ansi-red">\n!!! INTERROMPIDO PELO USUÁRIO !!!</div>`;
         }
 
+        // --- UTILITÁRIOS ---
         function openAddModal() { document.getElementById('modalAdd').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        
         async function closeTerminal() {
             if(isRunning) await stopScript();
             closeModal('modalTerm');
         }
 
-        // Inicialização
         loadScripts();
-
     </script>
 </body>
 </html>
