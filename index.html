@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Kanban Runner</title>
+    <title>Python Runner</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
@@ -11,10 +11,10 @@
 
     <style>
         :root {
-            --bg-body: #0079bf; /* Cor clássica Trello Blue ou use gradiente */
+            /* --- CORES --- */
+            --bg-body: linear-gradient(-45deg, #141e30, #243b55, #1cb5e0, #000046);
             --board-bg: #101204;
-            --column-bg: #ebecf0; /* Modo claro para colunas ficarem visíveis ou dark */
-            --column-bg-dark: #101204;
+            --column-bg: #101204;
             --card-bg: #22272b;
             --text-color: #c9d1d9;
             --modal-bg: #22272e;
@@ -27,10 +27,18 @@
         body {
             font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; height: 100vh;
-            background: linear-gradient(135deg, #0079bf, #5067c5);
+            background: var(--bg-body);
+            background-size: 400% 400%;
+            animation: gradientAnim 15s ease infinite; /* Animação de fundo restaurada */
             color: var(--text-color);
             overflow: hidden;
             display: flex; flex-direction: column;
+        }
+
+        @keyframes gradientAnim {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         /* HEADER */
@@ -39,9 +47,9 @@
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(4px);
             display: flex; justify-content: space-between; align-items: center;
-            flex-shrink: 0;
+            flex-shrink: 0; border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .header h1 { font-size: 1.1rem; margin: 0; color: #fff; font-weight: 700; opacity: 0.9; }
+        .header h1 { font-size: 1.1rem; margin: 0; color: #fff; font-weight: 700; }
         .header-btn {
             background: rgba(255,255,255,0.2); border: none; color: #fff;
             padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
@@ -49,13 +57,13 @@
         }
         .header-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* KANBAN BOARD CONTAINER */
+        /* KANBAN BOARD */
         .board-container {
             flex-grow: 1;
             overflow-x: auto;
             overflow-y: hidden;
             padding: 20px;
-            white-space: nowrap; /* Permite colunas lado a lado */
+            white-space: nowrap;
             align-items: flex-start;
             display: flex;
         }
@@ -64,52 +72,44 @@
         .column {
             width: 272px;
             margin-right: 12px;
-            background-color: var(--column-bg-dark);
+            background-color: var(--column-bg);
             border-radius: 12px;
             display: inline-flex;
             flex-direction: column;
             max-height: 100%;
             vertical-align: top;
-            white-space: normal; /* Reseta para conteúdo interno */
+            white-space: normal;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            flex-shrink: 0; /* Não encolhe */
+            flex-shrink: 0;
         }
 
         .column-header {
             padding: 10px 12px;
             display: flex; justify-content: space-between; align-items: center;
-            cursor: grab; /* Área de arrastar a coluna */
+            cursor: grab;
         }
         .column-title {
             font-weight: 600; color: #fff; font-size: 0.95rem;
             padding: 4px; border-radius: 3px; border: 1px solid transparent;
-            width: 100%;
+            width: 100%; background: transparent; color: white;
         }
         .column-title:focus { background: #22272b; border-color: var(--primary); outline: none; }
         .delete-col-btn { color: #6b778c; cursor: pointer; padding: 4px; font-size: 1rem; margin-left: 5px;}
         .delete-col-btn:hover { color: var(--danger); }
 
         .card-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 0 8px 8px 8px;
-            min-height: 20px; /* Área de drop */
+            flex-grow: 1; overflow-y: auto; padding: 0 8px 8px 8px; min-height: 20px;
         }
-        /* Scrollbar fina na lista */
         .card-list::-webkit-scrollbar { width: 8px; }
         .card-list::-webkit-scrollbar-thumb { background: #3a4149; border-radius: 4px; }
 
         /* CARDS */
         .kanban-card {
             background-color: var(--card-bg);
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 8px;
+            border-radius: 8px; padding: 10px; margin-bottom: 8px;
             box-shadow: 0 1px 0 rgba(9,30,66,.25);
-            cursor: pointer;
-            position: relative;
-            border: 1px solid transparent;
+            cursor: pointer; position: relative; border: 1px solid transparent;
             transition: 0.2s;
         }
         .kanban-card:hover { border-color: var(--primary); background: #2c333a; }
@@ -127,46 +127,73 @@
         .card-delete-btn:hover { color: var(--danger); background: rgba(0,0,0,0.8); }
 
         .add-card-btn {
-            margin: 0 8px 8px 8px;
-            padding: 8px;
-            border-radius: 4px;
-            color: #9fadbc;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 5px;
+            margin: 0 8px 8px 8px; padding: 8px; border-radius: 4px;
+            color: #9fadbc; cursor: pointer; display: flex; align-items: center; gap: 5px;
             font-size: 0.9rem;
         }
         .add-card-btn:hover { background-color: rgba(255,255,255,0.1); color: #fff; }
 
-        /* MODALS (MESMO ESTILO ANTERIOR) */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.2s; z-index: 1000; }
+        /* MODALS BASE */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.2s; z-index: 1000;
+        }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
-        .modal-small { background: var(--modal-bg); width: 400px; padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; transform: scale(0.9); transition: 0.3s; }
+        /* MODAL PEQUENO (ADD) */
+        .modal-small {
+            background: var(--modal-bg); width: 400px; padding: 25px;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; gap: 15px;
+            transform: scale(0.9); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
         .modal-overlay.active .modal-small { transform: scale(1); }
 
-        .modal-large { background: var(--modal-bg); width: 95%; max-width: 1200px; height: 90vh; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        /* MODAL GRANDE (TERMINAL) */
+        .modal-large {
+            background: var(--modal-bg); width: 95%; max-width: 1200px; height: 90vh;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; overflow: hidden;
+            transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
         .modal-overlay.active .modal-large { transform: scale(1); }
 
-        /* Form Styles */
-        input { background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 6px; color: #fff; outline: none; font-family: 'Inter', sans-serif; }
+        /* FORMS */
+        input { background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 6px; color: #fff; outline: none; font-family: 'Inter', sans-serif; width: 100%; box-sizing: border-box; }
         input:focus { border-color: var(--primary); }
-        .btn-primary { background: var(--primary); color: #0d1117; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: #0d1117; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; }
         .btn-close-modal { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; float: right; }
 
         /* TERMINAL */
         .term-header { padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .term-body { flex-grow: 1; padding: 20px; overflow-y: auto; background: var(--terminal-bg); font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.2; color: #c9d1d9; white-space: pre-wrap; word-wrap: break-word; }
+        .term-body::-webkit-scrollbar { width: 12px; }
+        .term-body::-webkit-scrollbar-track { background: #0d1117; }
+        .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 6px; }
+        
         .term-footer { padding: 15px 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
         .prompt { color: var(--success); font-weight: bold; }
         #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; color: #fff; font-size: 1rem; }
         .btn-stop { background: var(--danger); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
 
-        /* ANSI Colors */
+        /* CORES ANSI */
         .ansi-red { color: #ff7b72; font-weight: bold; } .ansi-green { color: #3fb950; font-weight: bold; } .ansi-yellow { color: #d29922; } .ansi-blue { color: #58a6ff; } .ansi-magenta { color: #bc8cff; } .ansi-cyan { color: #39c5cf; } .ansi-bold { font-weight: bold; color: #fff; } .user-echo { color: #fff; font-weight: bold; margin: 5px 0; }
 
-        /* Confirm Modal */
-        .modal-confirm { background: #1c1c1c; border: 1px solid #444; width: 300px; padding: 20px; border-radius: 8px; text-align: center; display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .modal-confirm.active { display: block; }
+        /* POPUP GENÉRICO (Alert/Confirm) */
+        .modal-alert {
+            background: #1c1c1c; border: 1px solid #444; width: 350px; padding: 25px;
+            border-radius: 12px; text-align: center; z-index: 2000;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+        }
+        .modal-alert h3 { margin-top: 0; color: #fff; }
+        .modal-alert p { color: #ccc; font-size: 0.95rem; margin-bottom: 20px; }
+        .alert-actions { display: flex; justify-content: center; gap: 10px; }
+        .btn-ok { background: var(--primary); color: #0d1117; border: none; padding: 8px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn-yes { background: var(--danger); color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
+        .btn-no { background: #444; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
+
     </style>
 </head>
 <body>
@@ -176,17 +203,19 @@
         <button class="header-btn" onclick="addNewColumn()">+ Add Lista</button>
     </div>
 
-    <div class="board-container" id="board">
-        </div>
+    <div class="board-container" id="board"></div>
 
     <div class="modal-overlay" id="modalAddCard">
         <div class="modal-small">
-            <div><h2 style="margin:0; color:#fff; display:inline;">Novo Script</h2><button class="btn-close-modal" onclick="closeModal('modalAddCard')">×</button></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0; color:#fff;">Novo Script</h2>
+                <button class="btn-close-modal" onclick="closeModal('modalAddCard')">×</button>
+            </div>
             <input type="hidden" id="targetColId">
-            <input type="text" id="newCardTitle" placeholder="Título (Ex: Automação X)">
+            <input type="text" id="newCardTitle" placeholder="Título (Ex: Automação)">
             <input type="text" id="newCardFile" placeholder="Arquivo (Ex: script.py)">
             <div style="display:flex; gap:5px;">
-                <div style="flex:1; height:30px; background:#eb5a46; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#eb5a46')" class="color-opt selected"></div>
+                <div style="flex:1; height:30px; background:#eb5a46; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#eb5a46')" class="color-opt selected" style="border-color:white"></div>
                 <div style="flex:1; height:30px; background:#f2d600; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#f2d600')" class="color-opt"></div>
                 <div style="flex:1; height:30px; background:#61bd4f; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#61bd4f')" class="color-opt"></div>
                 <div style="flex:1; height:30px; background:#0079bf; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#0079bf')" class="color-opt"></div>
@@ -210,45 +239,66 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="confirmOverlay" style="z-index: 1500; background: rgba(0,0,0,0.6);">
-        <div class="modal-confirm active">
-            <h3 style="color:#fff; margin:0;">Execução em Andamento</h3>
-            <p style="color:#aaa;">Deseja interromper?</p>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
-                <button class="header-btn" onclick="document.getElementById('confirmOverlay').classList.remove('active')">Não</button>
-                <button class="btn-stop" onclick="forceCloseTerminal()">Sim, Parar</button>
-            </div>
+    <div class="modal-overlay" id="customPopupOverlay" style="z-index: 2000;">
+        <div class="modal-alert">
+            <h3 id="popupTitle">Atenção</h3>
+            <p id="popupMessage">Mensagem aqui</p>
+            <div class="alert-actions" id="popupActions">
+                </div>
         </div>
     </div>
 
     <script>
-        // --- DADOS E ESTADO ---
         const BASE_URL = 'http://localhost:5000/api';
-        let boardData = JSON.parse(localStorage.getItem('kanbanData')) || {
-            columns: [
-                { id: 'col-1', title: 'Fluxo PS8', cards: [ 
-                    { id: 'c1', title: 'Novo Cadastro PS8', file: 'ps8_auto_insert_cancel.py', color: '#f2d600' },
-                    { id: 'c2', title: 'Cancelamento', file: 'ps8_auto_insert_cancel.py', color: '#eb5a46' } 
-                ]},
-                { id: 'col-2', title: 'Fluxo SPS', cards: [
-                    { id: 'c3', title: 'SPS Active', file: 'tr_active_sps 4.py', color: '#61bd4f' },
-                    { id: 'c4', title: 'SPS Change', file: 'tr_sps_change 2 1.py', color: '#0079bf' }
-                ]}
-            ]
-        };
+        // INICIA VAZIO SE NÃO TIVER DADOS SALVOS
+        let boardData = JSON.parse(localStorage.getItem('kanbanData')) || { columns: [] };
         
         let selectedColor = '#eb5a46';
         let streamReader = null;
         let isRunning = false;
         const ansi_up = new AnsiUp();
 
-        // --- RENDERIZAÇÃO ---
+        // --- CUSTOM ALERTS/CONFIRMS (Substitui nativos) ---
+        function showCustomAlert(msg) {
+            const overlay = document.getElementById('customPopupOverlay');
+            document.getElementById('popupTitle').innerText = 'Aviso';
+            document.getElementById('popupMessage').innerText = msg;
+            document.getElementById('popupActions').innerHTML = `<button class="btn-ok" onclick="closePopup()">OK</button>`;
+            overlay.classList.add('active');
+        }
+
+        function showCustomConfirm(msg, onYes) {
+            const overlay = document.getElementById('customPopupOverlay');
+            document.getElementById('popupTitle').innerText = 'Confirmação';
+            document.getElementById('popupMessage').innerText = msg;
+            
+            // Hack para passar a função
+            const btnYes = document.createElement('button');
+            btnYes.className = 'btn-yes'; btnYes.innerText = 'Sim';
+            btnYes.onclick = () => { closePopup(); onYes(); };
+
+            const btnNo = document.createElement('button');
+            btnNo.className = 'btn-no'; btnNo.innerText = 'Não';
+            btnNo.onclick = closePopup;
+
+            const actions = document.getElementById('popupActions');
+            actions.innerHTML = '';
+            actions.appendChild(btnNo);
+            actions.appendChild(btnYes);
+            
+            overlay.classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('customPopupOverlay').classList.remove('active');
+        }
+
+        // --- RENDERIZAÇÃO KANBAN ---
         function renderBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
 
             boardData.columns.forEach(col => {
-                // Cria Coluna
                 const colEl = document.createElement('div');
                 colEl.className = 'column';
                 colEl.dataset.colId = col.id;
@@ -263,7 +313,6 @@
 
                 const listEl = colEl.querySelector('.card-list');
                 
-                // Cria Cards
                 col.cards.forEach(card => {
                     const cardEl = document.createElement('div');
                     cardEl.className = 'kanban-card';
@@ -278,33 +327,22 @@
                     listEl.appendChild(cardEl);
                 });
 
-                // Inicializa Drag & Drop na Lista de Cards
                 new Sortable(listEl, {
-                    group: 'shared', // Permite mover entre colunas
-                    animation: 150,
-                    ghostClass: 'sortable-ghost',
-                    onEnd: function (evt) {
-                        moveCard(evt.from.id, evt.to.id, evt.oldIndex, evt.newIndex);
-                    }
+                    group: 'shared', animation: 150, ghostClass: 'sortable-ghost',
+                    onEnd: function (evt) { moveCard(evt.from.id, evt.to.id, evt.oldIndex, evt.newIndex); }
                 });
 
                 board.appendChild(colEl);
             });
 
-            // Inicializa Drag & Drop nas Colunas
             new Sortable(board, {
-                animation: 150,
-                handle: '.column-header',
-                onEnd: function (evt) {
-                    moveColumn(evt.oldIndex, evt.newIndex);
-                }
+                animation: 150, handle: '.column-header',
+                onEnd: function (evt) { moveColumn(evt.oldIndex, evt.newIndex); }
             });
         }
 
         // --- CRUD KANBAN ---
-        function saveData() {
-            localStorage.setItem('kanbanData', JSON.stringify(boardData));
-        }
+        function saveData() { localStorage.setItem('kanbanData', JSON.stringify(boardData)); }
 
         function moveCard(fromColId, toColId, oldIndex, newIndex) {
             const fromCol = boardData.columns.find(c => c.id === fromColId);
@@ -322,12 +360,15 @@
 
         function updateColTitle(colId, newTitle) {
             const col = boardData.columns.find(c => c.id === colId);
-            col.title = newTitle;
-            saveData();
+            col.title = newTitle; saveData();
         }
 
         function addNewColumn() {
-            const title = prompt("Nome da Lista:");
+            // Usa prompt simples apenas para nome, poderia ser modal tbm mas prompt é aceitavel pra input simples
+            // Mas como pediu "popups estilosos", vamos usar um hack com nosso modal custom? 
+            // Pra simplificar e não criar outro modal HTML, vou deixar prompt, mas se quiser mudo.
+            // O usuário pediu "popups estilosos" para alertas. Prompt é input. Vou deixar assim por hora.
+            const title = prompt("Nome da Nova Lista:"); 
             if(title) {
                 boardData.columns.push({ id: 'col-' + Date.now(), title: title, cards: [] });
                 saveData(); renderBoard();
@@ -335,10 +376,10 @@
         }
 
         function deleteColumn(colId) {
-            if(confirm("Deletar lista e todos os cards?")) {
+            showCustomConfirm("Deletar lista e todos os cards?", () => {
                 boardData.columns = boardData.columns.filter(c => c.id !== colId);
                 saveData(); renderBoard();
-            }
+            });
         }
 
         function openAddCardModal(colId) {
@@ -359,7 +400,7 @@
             const title = document.getElementById('newCardTitle').value;
             const file = document.getElementById('newCardFile').value;
             
-            if(!title || !file) return alert("Preencha tudo!");
+            if(!title || !file) { showCustomAlert("Preencha título e arquivo!"); return; }
             
             const col = boardData.columns.find(c => c.id === colId);
             col.cards.push({ id: 'card-' + Date.now(), title, file, color: selectedColor });
@@ -367,11 +408,11 @@
         }
 
         function deleteCard(colId, cardId) {
-            if(confirm("Deletar card?")) {
+            showCustomConfirm("Deletar este cartão?", () => {
                 const col = boardData.columns.find(c => c.id === colId);
                 col.cards = col.cards.filter(c => c.id !== cardId);
                 saveData(); renderBoard();
-            }
+            });
         }
 
         // --- TERMINAL & EXECUÇÃO ---
@@ -423,12 +464,34 @@
             isRunning = false;
         }
 
-        // --- UTIL ---
+        // --- FECHAR E CLICK OUTSIDE ---
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function tryCloseTerminal() { if(isRunning) document.getElementById('confirmOverlay').classList.add('active'); else closeModal('modalTerm'); }
-        async function forceCloseTerminal() { document.getElementById('confirmOverlay').classList.remove('active'); await stopScript(); closeModal('modalTerm'); }
+        
+        function tryCloseTerminal() {
+            if(isRunning) {
+                showCustomConfirm("O script está rodando. Deseja interromper?", async () => {
+                    await stopScript();
+                    closeModal('modalTerm');
+                });
+            } else {
+                closeModal('modalTerm');
+            }
+        }
 
-        document.getElementById('confirmOverlay').classList.remove('active'); // Init
+        // Lógica de fechar clicando fora
+        document.getElementById('modalTerm').addEventListener('click', (e) => {
+            // Se clicou exatamente no overlay (fundo escuro) e não na janela
+            if(e.target.id === 'modalTerm') tryCloseTerminal();
+        });
+        
+        document.getElementById('modalAddCard').addEventListener('click', (e) => {
+            if(e.target.id === 'modalAddCard') closeModal('modalAddCard');
+        });
+
+        document.getElementById('customPopupOverlay').addEventListener('click', (e) => {
+             if(e.target.id === 'customPopupOverlay') closePopup();
+        });
+
         renderBoard(); // Init Kanban
     </script>
 </body>
