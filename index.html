@@ -11,7 +11,6 @@
 
     <style>
         :root {
-            /* --- CORES --- */
             --bg-body: linear-gradient(-45deg, #141e30, #243b55, #1cb5e0, #000046);
             --board-bg: #101204;
             --column-bg: #101204;
@@ -29,7 +28,7 @@
             margin: 0; padding: 0; height: 100vh;
             background: var(--bg-body);
             background-size: 400% 400%;
-            animation: gradientAnim 15s ease infinite; /* Animação de fundo restaurada */
+            animation: gradientAnim 15s ease infinite;
             color: var(--text-color);
             overflow: hidden;
             display: flex; flex-direction: column;
@@ -168,7 +167,14 @@
 
         /* TERMINAL */
         .term-header { padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .term-body { flex-grow: 1; padding: 20px; overflow-y: auto; background: var(--terminal-bg); font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.2; color: #c9d1d9; white-space: pre-wrap; word-wrap: break-word; }
+        .term-title { font-weight: 600; color: #fff; }
+        
+        .term-body { 
+            flex-grow: 1; padding: 20px; overflow-y: auto; 
+            background: var(--terminal-bg); 
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.2; color: #c9d1d9; 
+            white-space: pre-wrap; word-wrap: break-word; 
+        }
         .term-body::-webkit-scrollbar { width: 12px; }
         .term-body::-webkit-scrollbar-track { background: #0d1117; }
         .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 6px; }
@@ -176,7 +182,13 @@
         .term-footer { padding: 15px 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
         .prompt { color: var(--success); font-weight: bold; }
         #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; color: #fff; font-size: 1rem; }
+        
+        /* BOTÕES FOOTER TERMINAL */
         .btn-stop { background: var(--danger); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .btn-stop:hover { opacity: 0.9; }
+        
+        .btn-restart { background: var(--success); color: #0d1117; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .btn-restart:hover { filter: brightness(1.1); }
 
         /* CORES ANSI */
         .ansi-red { color: #ff7b72; font-weight: bold; } .ansi-green { color: #3fb950; font-weight: bold; } .ansi-yellow { color: #d29922; } .ansi-blue { color: #58a6ff; } .ansi-magenta { color: #bc8cff; } .ansi-cyan { color: #39c5cf; } .ansi-bold { font-weight: bold; color: #fff; } .user-echo { color: #fff; font-weight: bold; margin: 5px 0; }
@@ -207,12 +219,9 @@
 
     <div class="modal-overlay" id="modalAddCard">
         <div class="modal-small">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="margin:0; color:#fff;">Novo Script</h2>
-                <button class="btn-close-modal" onclick="closeModal('modalAddCard')">×</button>
-            </div>
+            <div><h2 style="margin:0; color:#fff; display:inline;">Novo Script</h2><button class="btn-close-modal" onclick="closeModal('modalAddCard')">×</button></div>
             <input type="hidden" id="targetColId">
-            <input type="text" id="newCardTitle" placeholder="Título (Ex: Automação)">
+            <input type="text" id="newCardTitle" placeholder="Título (Ex: Automação X)">
             <input type="text" id="newCardFile" placeholder="Arquivo (Ex: script.py)">
             <div style="display:flex; gap:5px;">
                 <div style="flex:1; height:30px; background:#eb5a46; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#eb5a46')" class="color-opt selected" style="border-color:white"></div>
@@ -234,6 +243,7 @@
             <div class="term-footer">
                 <span class="prompt">>></span>
                 <input type="text" id="cmdInput" placeholder="Digite aqui..." autocomplete="off">
+                <button class="btn-restart" onclick="restartScript()">Reiniciar Aplicação</button>
                 <button class="btn-stop" onclick="stopScript()">PARAR</button>
             </div>
         </div>
@@ -243,22 +253,22 @@
         <div class="modal-alert">
             <h3 id="popupTitle">Atenção</h3>
             <p id="popupMessage">Mensagem aqui</p>
-            <div class="alert-actions" id="popupActions">
-                </div>
+            <div class="alert-actions" id="popupActions"></div>
         </div>
     </div>
 
     <script>
         const BASE_URL = 'http://localhost:5000/api';
-        // INICIA VAZIO SE NÃO TIVER DADOS SALVOS
+        // BOARD VAZIO POR PADRÃO - Usuário cria tudo
         let boardData = JSON.parse(localStorage.getItem('kanbanData')) || { columns: [] };
         
         let selectedColor = '#eb5a46';
         let streamReader = null;
         let isRunning = false;
+        let activeScriptFile = ''; // Guarda o arquivo atual para reiniciar
         const ansi_up = new AnsiUp();
 
-        // --- CUSTOM ALERTS/CONFIRMS (Substitui nativos) ---
+        // --- FUNÇÕES DE MODAL CUSTOM ---
         function showCustomAlert(msg) {
             const overlay = document.getElementById('customPopupOverlay');
             document.getElementById('popupTitle').innerText = 'Aviso';
@@ -272,28 +282,25 @@
             document.getElementById('popupTitle').innerText = 'Confirmação';
             document.getElementById('popupMessage').innerText = msg;
             
-            // Hack para passar a função
-            const btnYes = document.createElement('button');
-            btnYes.className = 'btn-yes'; btnYes.innerText = 'Sim';
-            btnYes.onclick = () => { closePopup(); onYes(); };
-
+            const actions = document.getElementById('popupActions');
+            actions.innerHTML = '';
+            
             const btnNo = document.createElement('button');
             btnNo.className = 'btn-no'; btnNo.innerText = 'Não';
             btnNo.onclick = closePopup;
 
-            const actions = document.getElementById('popupActions');
-            actions.innerHTML = '';
+            const btnYes = document.createElement('button');
+            btnYes.className = 'btn-yes'; btnYes.innerText = 'Sim';
+            btnYes.onclick = () => { closePopup(); onYes(); };
+
             actions.appendChild(btnNo);
             actions.appendChild(btnYes);
-            
             overlay.classList.add('active');
         }
 
-        function closePopup() {
-            document.getElementById('customPopupOverlay').classList.remove('active');
-        }
+        function closePopup() { document.getElementById('customPopupOverlay').classList.remove('active'); }
 
-        // --- RENDERIZAÇÃO KANBAN ---
+        // --- KANBAN ---
         function renderBoard() {
             const board = document.getElementById('board');
             board.innerHTML = '';
@@ -341,7 +348,7 @@
             });
         }
 
-        // --- CRUD KANBAN ---
+        // --- DATA MANAGER ---
         function saveData() { localStorage.setItem('kanbanData', JSON.stringify(boardData)); }
 
         function moveCard(fromColId, toColId, oldIndex, newIndex) {
@@ -364,11 +371,8 @@
         }
 
         function addNewColumn() {
-            // Usa prompt simples apenas para nome, poderia ser modal tbm mas prompt é aceitavel pra input simples
-            // Mas como pediu "popups estilosos", vamos usar um hack com nosso modal custom? 
-            // Pra simplificar e não criar outro modal HTML, vou deixar prompt, mas se quiser mudo.
-            // O usuário pediu "popups estilosos" para alertas. Prompt é input. Vou deixar assim por hora.
-            const title = prompt("Nome da Nova Lista:"); 
+            // Usando prompt nativo apenas para nome da lista, pois é rápido
+            const title = prompt("Nome da Nova Lista:");
             if(title) {
                 boardData.columns.push({ id: 'col-' + Date.now(), title: title, cards: [] });
                 saveData(); renderBoard();
@@ -376,7 +380,7 @@
         }
 
         function deleteColumn(colId) {
-            showCustomConfirm("Deletar lista e todos os cards?", () => {
+            showCustomConfirm("Deletar esta lista e todos os cartões?", () => {
                 boardData.columns = boardData.columns.filter(c => c.id !== colId);
                 saveData(); renderBoard();
             });
@@ -415,15 +419,32 @@
             });
         }
 
-        // --- TERMINAL & EXECUÇÃO ---
+        // --- EXECUÇÃO ---
         function runScript(title, filename) {
             document.getElementById('modalTerm').classList.add('active');
             document.getElementById('termTitle').innerText = `> ${title} (${filename})`;
             const term = document.getElementById('termOutput');
             term.innerHTML = '<div style="color:#8b949e">Iniciando conexão...</div>';
             
+            activeScriptFile = filename; // Salva para reinício
             startStream(filename);
             setTimeout(() => document.getElementById('cmdInput').focus(), 500);
+        }
+
+        // Função de Reinício Rápido
+        async function restartScript() {
+            if(!activeScriptFile) return;
+            
+            if(isRunning) {
+                // Se estiver rodando, para primeiro
+                await stopScript(); 
+            }
+            
+            const term = document.getElementById('termOutput');
+            term.innerHTML = '<div style="color:#3fb950">♻️ Reiniciando aplicação...</div>';
+            
+            startStream(activeScriptFile);
+            document.getElementById('cmdInput').focus();
         }
 
         async function startStream(filename) {
@@ -440,7 +461,6 @@
                     const {done, value} = await streamReader.read();
                     if(done) break;
                     const chunk = decoder.decode(value, {stream: true});
-                    // Converte ANSI para HTML
                     term.innerHTML += ansi_up.ansi_to_html(chunk);
                     term.scrollTop = term.scrollHeight;
                 }
@@ -464,35 +484,31 @@
             isRunning = false;
         }
 
-        // --- FECHAR E CLICK OUTSIDE ---
+        // --- UI UTILS ---
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         
-        function tryCloseTerminal() {
-            if(isRunning) {
-                showCustomConfirm("O script está rodando. Deseja interromper?", async () => {
-                    await stopScript();
-                    closeModal('modalTerm');
-                });
-            } else {
-                closeModal('modalTerm');
-            }
+        function tryCloseTerminal() { 
+            if(isRunning) showCustomConfirm("Script em execução. Deseja parar?", forceCloseTerminal);
+            else closeModal('modalTerm'); 
+        }
+        
+        async function forceCloseTerminal() { 
+            await stopScript(); 
+            closeModal('modalTerm'); 
         }
 
-        // Lógica de fechar clicando fora
+        // Click outside
         document.getElementById('modalTerm').addEventListener('click', (e) => {
-            // Se clicou exatamente no overlay (fundo escuro) e não na janela
             if(e.target.id === 'modalTerm') tryCloseTerminal();
         });
-        
         document.getElementById('modalAddCard').addEventListener('click', (e) => {
             if(e.target.id === 'modalAddCard') closeModal('modalAddCard');
         });
-
         document.getElementById('customPopupOverlay').addEventListener('click', (e) => {
-             if(e.target.id === 'customPopupOverlay') closePopup();
+            if(e.target.id === 'customPopupOverlay') closePopup();
         });
 
-        renderBoard(); // Init Kanban
+        renderBoard(); // Start
     </script>
 </body>
 </html>
