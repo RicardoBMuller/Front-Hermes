@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Python Script Runner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
+
     <style>
         :root {
             --bg-body: linear-gradient(-45deg, #141e30, #243b55);
             --card-bg: #1d2126;
             --text-color: #c9d1d9;
             --modal-bg: #22272e;
-            --terminal-bg: #0d1117;
+            --terminal-bg: #0d1117; /* Preto quase absoluto */
             --primary: #58a6ff;
             --danger: #f85149;
             --success: #3fb950;
@@ -41,7 +44,7 @@
         }
         .add-btn-header:hover { filter: brightness(1.1); }
 
-        /* MAIN */
+        /* MAIN CONTAINER */
         .main-container { flex-grow: 1; padding: 30px; overflow-y: auto; }
         .grid-cards {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -79,7 +82,7 @@
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
 
-        /* MODAL PEQUENO (ADD) */
+        /* MODAL ADD SCRIPT */
         .modal-small {
             background: var(--modal-bg); width: 400px; padding: 25px;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
@@ -89,13 +92,13 @@
 
         input {
             background: #0d1117; border: 1px solid #30363d;
-            padding: 12px; border-radius: 6px; color: #fff; outline: none;
+            padding: 12px; border-radius: 6px; color: #fff; outline: none; font-family: 'Inter', sans-serif;
         }
         input:focus { border-color: var(--primary); }
 
-        /* MODAL TERMINAL (GRANDE) */
+        /* MODAL TERMINAL */
         .modal-large {
-            background: var(--modal-bg); width: 90%; max-width: 1000px; height: 85vh;
+            background: var(--modal-bg); width: 95%; max-width: 1200px; height: 90vh;
             border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             display: flex; flex-direction: column; overflow: hidden;
             transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
@@ -104,64 +107,72 @@
 
         .term-header {
             padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
         }
         .term-title { font-weight: 600; color: #fff; }
         .btn-close { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
         .btn-close:hover { color: #fff; }
 
-        /* TERMINAL BODY (CORREÇÃO DA "BAGUNÇA") */
+        /* CORREÇÃO VISUAL DO TERMINAL 
+           - Usa fonte Consolas para alinhamento perfeito.
+           - white-space: pre-wrap mantém formatação original.
+        */
         .term-body {
-            flex-grow: 1; padding: 15px; overflow-y: auto;
+            flex-grow: 1; 
+            padding: 20px; 
+            overflow-y: auto;
             background: var(--terminal-bg); 
-            font-family: 'Consolas', monospace;
-            font-size: 0.9rem; 
-            line-height: 1.4; 
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Essencial para alinhar tabelas */
+            font-size: 14px; /* Tamanho legível */
+            line-height: 1.2; /* Espaçamento de terminal */
             color: #c9d1d9;
-            /* Isso é o segredo: preserva espaços e quebras de linha exatos do Python */
             white-space: pre-wrap; 
             word-wrap: break-word;
         }
-        .term-body::-webkit-scrollbar { width: 10px; }
+        
+        .term-body::-webkit-scrollbar { width: 12px; }
         .term-body::-webkit-scrollbar-track { background: #0d1117; }
-        .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 5px; }
+        .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 6px; }
 
         .term-footer {
-            padding: 10px 20px; background: #161b22; border-top: 1px solid #30363d;
-            display: flex; gap: 10px; align-items: center;
+            padding: 15px 20px; background: #161b22; border-top: 1px solid #30363d;
+            display: flex; gap: 10px; align-items: center; flex-shrink: 0;
         }
-        .prompt { color: var(--success); font-weight: bold; }
-        #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; color: #fff; font-size: 1rem;}
+        .prompt { color: var(--success); font-weight: bold; font-family: monospace; font-size: 1.1rem;}
+        #cmdInput { 
+            flex-grow: 1; background: transparent; border: none; padding: 0; 
+            font-family: 'Consolas', monospace; color: #fff; font-size: 1rem; 
+        }
         
-        /* CORES ANSI */
-        .ansi-red { color: #ff7b72; font-weight: bold; }
-        .ansi-green { color: #3fb950; font-weight: bold; }
-        .ansi-yellow { color: #d29922; }
-        .ansi-blue { color: #58a6ff; }
-        .ansi-magenta { color: #bc8cff; }
-        .ansi-cyan { color: #39c5cf; }
-        .ansi-bold { font-weight: bold; color: #fff; }
-        .user-echo { color: #fff; font-weight: bold; opacity: 0.8; }
+        .btn-stop {
+            background: var(--danger); color: #fff; border: none;
+            padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .btn-stop:hover { opacity: 0.9; }
 
-        /* MODAL DE CONFIRMAÇÃO DE SAÍDA */
+        /* CONFIRM MODAL */
         .modal-confirm {
             background: #1c1c1c; border: 1px solid #444; width: 300px; padding: 20px;
             border-radius: 8px; text-align: center; display: none;
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
+        .modal-confirm.active { display: block; }
         .modal-confirm h3 { margin-top: 0; color: #fff; }
         .modal-confirm p { color: #ccc; font-size: 0.9rem; }
         .confirm-actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
         .btn-yes { background: var(--danger); color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
         .btn-no { background: #444; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
 
+        /* Helper para mensagem digitada pelo usuário no log */
+        .user-echo { color: #fff; font-weight: bold; margin-top: 5px; }
+
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Script Runner</h1>
+        <h1>Python Script Runner</h1>
         <button class="add-btn-header" onclick="openAddModal()">+ Novo Script</button>
     </div>
 
@@ -178,8 +189,8 @@
                 <h2 style="margin:0; color:#fff;">Novo Script</h2>
                 <button class="btn-close" onclick="closeModal('modalAdd')">×</button>
             </div>
-            <input type="text" id="newTitle" placeholder="Título (ex: Automação X)">
-            <input type="text" id="newDesc" placeholder="Descrição (ex: Roda processo diário)">
+            <input type="text" id="newTitle" placeholder="Título (ex: Validador CEP)">
+            <input type="text" id="newDesc" placeholder="Descrição (ex: Verifica base de dados)">
             <input type="text" id="newFile" placeholder="Arquivo (ex: script.py)">
             <button class="add-btn-header" style="width:100%" onclick="saveScript()">Salvar</button>
         </div>
@@ -195,17 +206,18 @@
             <div class="term-footer">
                 <span class="prompt">>></span>
                 <input type="text" id="cmdInput" placeholder="Digite aqui..." autocomplete="off">
+                <button class="btn-stop" id="btnStop" onclick="stopScript()">PARAR</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modalConfirm" style="z-index: 1500; background: rgba(0,0,0,0.6);">
-        <div class="modal-small" style="width:300px; text-align:center;">
-            <h3 style="color:#fff; margin:0;">⚠️ Execução em andamento</h3>
-            <p style="color:#aaa;">Deseja interromper o script?</p>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
-                <button class="btn-close" style="font-size:1rem; border:1px solid #444; padding:8px 16px; border-radius:4px;" onclick="closeModal('modalConfirm')">Não</button>
-                <button class="add-btn-header" style="background:var(--danger);" onclick="forceCloseTerminal()">Sim, Parar</button>
+    <div class="modal-overlay" id="confirmOverlay" style="z-index: 1500; background: rgba(0,0,0,0.6);">
+        <div class="modal-confirm active">
+            <h3>⚠️ Execução em Andamento</h3>
+            <p>Deseja realmente interromper o script?</p>
+            <div class="confirm-actions">
+                <button class="btn-no" onclick="closeConfirm()">Não</button>
+                <button class="btn-yes" onclick="forceCloseTerminal()">Sim, Parar</button>
             </div>
         </div>
     </div>
@@ -214,8 +226,9 @@
         const BASE_URL = 'http://localhost:5000/api';
         let streamReader = null;
         let isRunning = false;
+        const ansi_up = new AnsiUp(); // Inicializa a biblioteca de cores ANSI
 
-        // --- CARDS E STORAGE ---
+        // --- CARDS & STORAGE ---
         function loadScripts() {
             const container = document.getElementById('cardsContainer');
             const empty = document.getElementById('emptyState');
@@ -245,21 +258,18 @@
             const desc = document.getElementById('newDesc').value;
             const file = document.getElementById('newFile').value.trim();
             if(!title || !file) return alert("Preencha Título e Arquivo");
-            if(!file.endsWith('.py')) return alert("Arquivo deve ser .py");
-
+            
             const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
             scripts.push({ title, desc, file });
             localStorage.setItem('myScripts', JSON.stringify(scripts));
             
-            document.getElementById('newTitle').value = '';
-            document.getElementById('newDesc').value = '';
-            document.getElementById('newFile').value = '';
+            document.getElementById('newTitle').value = ''; document.getElementById('newDesc').value = ''; document.getElementById('newFile').value = '';
             closeModal('modalAdd');
             loadScripts();
         }
 
         function deleteScript(index) {
-            if(confirm("Remover este script?")) {
+            if(confirm("Remover script?")) {
                 const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
                 scripts.splice(index, 1);
                 localStorage.setItem('myScripts', JSON.stringify(scripts));
@@ -272,28 +282,10 @@
             document.getElementById('modalTerm').classList.add('active');
             document.getElementById('termTitle').innerText = `Executando: ${script.title}`;
             const term = document.getElementById('termOutput');
-            term.innerHTML = '<div style="color:#8b949e">Iniciando terminal...</div>';
+            term.innerHTML = '<div style="color:#8b949e">Conectando ao terminal...</div>';
             
             startStream(script.file);
-            // Foca no input automaticamente
             setTimeout(() => document.getElementById('cmdInput').focus(), 500);
-        }
-
-        function cleanANSI(text) {
-            if (!text) return '';
-            // Regex para converter códigos ANSI colorama para HTML
-            text = text
-                .replace(/\u001b\[31m/g, '<span class="ansi-red">')
-                .replace(/\u001b\[32m/g, '<span class="ansi-green">')
-                .replace(/\u001b\[33m/g, '<span class="ansi-yellow">')
-                .replace(/\u001b\[34m/g, '<span class="ansi-blue">')
-                .replace(/\u001b\[35m/g, '<span class="ansi-magenta">')
-                .replace(/\u001b\[36m/g, '<span class="ansi-cyan">')
-                .replace(/\u001b\[37m/g, '<span style="color:#c9d1d9">')
-                .replace(/\u001b\[1m/g, '<span class="ansi-bold">')
-                .replace(/\u001b\[0m/g, '</span>')
-                .replace(/\u001b\[[0-9;]*m/g, ''); // Remove restos
-            return text;
         }
 
         async function startStream(filename) {
@@ -314,12 +306,16 @@
                     if (done) break;
                     
                     const chunk = decoder.decode(value, {stream: true});
-                    // append com HTML limpo
-                    term.innerHTML += cleanANSI(chunk);
+                    
+                    // Aqui usamos a biblioteca ansi_up para converter as cores do Python para HTML real
+                    const htmlChunk = ansi_up.ansi_to_html(chunk);
+                    
+                    // Append no innerHTML
+                    term.innerHTML += htmlChunk;
                     term.scrollTop = term.scrollHeight;
                 }
             } catch (e) {
-                term.innerHTML += `<div class="ansi-red">\nErro de Conexão: ${e.message}</div>`;
+                term.innerHTML += `<div style="color:#ff7b72">\nErro: ${e.message}</div>`;
             } finally {
                 isRunning = false;
                 term.innerHTML += `<div style="color:#8b949e; margin-top:10px;">--- PROCESSO FINALIZADO ---</div>`;
@@ -327,12 +323,13 @@
             }
         }
 
-        // --- ENVIO DE COMANDOS ---
+        // Envia o que o usuário digita para o Python
         document.getElementById('cmdInput').addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && isRunning) {
                 const val = e.target.value;
                 e.target.value = '';
                 
+                // Mostra visualmente o que foi digitado
                 const term = document.getElementById('termOutput');
                 term.innerHTML += `<div class="user-echo">${val}</div>`;
                 term.scrollTop = term.scrollHeight;
@@ -344,34 +341,47 @@
             }
         });
 
-        // --- LOGICA DE FECHAR ---
+        async function stopScript() {
+            if(streamReader) await streamReader.cancel();
+            await fetch(`${BASE_URL}/stop_script`, { method: 'POST' });
+            document.getElementById('termOutput').innerHTML += `<div style="color:#f85149">\n>>> INTERROMPIDO PELO USUÁRIO</div>`;
+            isRunning = false;
+        }
+
+        // --- CONTROLES DE FECHAR ---
         function openAddModal() { document.getElementById('modalAdd').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-        // Tentar fechar terminal
+        
+        // Tentativa de fechar terminal
         function tryCloseTerminal() {
             if (isRunning) {
-                document.getElementById('modalConfirm').classList.add('active');
+                document.getElementById('confirmOverlay').classList.add('active');
             } else {
                 closeModal('modalTerm');
             }
         }
 
-        // Clicar fora do modal de terminal
+        // Fecha modal de confirmação
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').classList.remove('active');
+        }
+
+        // Força o fechamento (Botão Sim)
+        async function forceCloseTerminal() {
+            closeConfirm();
+            await stopScript();
+            closeModal('modalTerm');
+        }
+
+        // Clique fora do terminal
         document.getElementById('modalTerm').addEventListener('click', (e) => {
             if(e.target.id === 'modalTerm') tryCloseTerminal();
         });
 
-        // Fechar forçado (Sim, Parar)
-        async function forceCloseTerminal() {
-            if(streamReader) await streamReader.cancel();
-            await fetch(`${BASE_URL}/stop_script`, { method: 'POST' });
-            isRunning = false;
-            closeModal('modalConfirm');
-            closeModal('modalTerm');
-        }
-
+        // Inicialização
+        document.getElementById('confirmOverlay').classList.remove('active'); // Garante oculto ao iniciar
         loadScripts();
+
     </script>
 </body>
 </html>
