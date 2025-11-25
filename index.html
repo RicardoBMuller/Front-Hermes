@@ -3,18 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python Script Runner</title>
+    <title>Python Kanban Runner</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Consolas:wght@400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/ansi_up@5.1.0/ansi_up.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
         :root {
-            --bg-body: linear-gradient(-45deg, #141e30, #243b55);
-            --card-bg: #1d2126;
+            --bg-body: #0079bf; /* Cor clássica Trello Blue ou use gradiente */
+            --board-bg: #101204;
+            --column-bg: #ebecf0; /* Modo claro para colunas ficarem visíveis ou dark */
+            --column-bg-dark: #101204;
+            --card-bg: #22272b;
             --text-color: #c9d1d9;
             --modal-bg: #22272e;
-            --terminal-bg: #0d1117; /* Preto quase absoluto */
+            --terminal-bg: #0d1117;
             --primary: #58a6ff;
             --danger: #f85149;
             --success: #3fb950;
@@ -23,7 +27,7 @@
         body {
             font-family: 'Inter', sans-serif;
             margin: 0; padding: 0; height: 100vh;
-            background: var(--bg-body);
+            background: linear-gradient(135deg, #0079bf, #5067c5);
             color: var(--text-color);
             overflow: hidden;
             display: flex; flex-direction: column;
@@ -31,168 +35,163 @@
 
         /* HEADER */
         .header {
-            padding: 15px 30px;
+            padding: 12px 20px;
             background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
             display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
         }
-        .header h1 { font-size: 1.2rem; margin: 0; color: #fff; }
-        .add-btn-header {
-            background: var(--primary); color: #0d1117; border: none;
-            padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        .header h1 { font-size: 1.1rem; margin: 0; color: #fff; font-weight: 700; opacity: 0.9; }
+        .header-btn {
+            background: rgba(255,255,255,0.2); border: none; color: #fff;
+            padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            transition: 0.2s;
         }
-        .add-btn-header:hover { filter: brightness(1.1); }
+        .header-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* MAIN CONTAINER */
-        .main-container { flex-grow: 1; padding: 30px; overflow-y: auto; }
-        .grid-cards {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px; max-width: 1200px; margin: 0 auto;
+        /* KANBAN BOARD CONTAINER */
+        .board-container {
+            flex-grow: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 20px;
+            white-space: nowrap; /* Permite colunas lado a lado */
+            align-items: flex-start;
+            display: flex;
         }
+
+        /* COLUNAS */
+        .column {
+            width: 272px;
+            margin-right: 12px;
+            background-color: var(--column-bg-dark);
+            border-radius: 12px;
+            display: inline-flex;
+            flex-direction: column;
+            max-height: 100%;
+            vertical-align: top;
+            white-space: normal; /* Reseta para conteúdo interno */
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Não encolhe */
+        }
+
+        .column-header {
+            padding: 10px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: grab; /* Área de arrastar a coluna */
+        }
+        .column-title {
+            font-weight: 600; color: #fff; font-size: 0.95rem;
+            padding: 4px; border-radius: 3px; border: 1px solid transparent;
+            width: 100%;
+        }
+        .column-title:focus { background: #22272b; border-color: var(--primary); outline: none; }
+        .delete-col-btn { color: #6b778c; cursor: pointer; padding: 4px; font-size: 1rem; margin-left: 5px;}
+        .delete-col-btn:hover { color: var(--danger); }
+
+        .card-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0 8px 8px 8px;
+            min-height: 20px; /* Área de drop */
+        }
+        /* Scrollbar fina na lista */
+        .card-list::-webkit-scrollbar { width: 8px; }
+        .card-list::-webkit-scrollbar-thumb { background: #3a4149; border-radius: 4px; }
 
         /* CARDS */
-        .card {
-            background: var(--card-bg); border-radius: 8px; padding: 15px;
-            border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            position: relative; transition: transform 0.2s, border-color 0.2s;
-            cursor: pointer; display: flex; flex-direction: column; height: 140px;
+        .kanban-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 0 rgba(9,30,66,.25);
+            cursor: pointer;
+            position: relative;
+            border: 1px solid transparent;
+            transition: 0.2s;
         }
-        .card:hover { transform: translateY(-3px); border-color: var(--primary); }
-        .card-tag { width: 40px; height: 6px; background: #d2a8ff; border-radius: 3px; margin-bottom: 10px; }
-        .card h3 { margin: 0 0 5px 0; color: #fff; font-size: 1rem; }
-        .card p { margin: 0; font-size: 0.85rem; color: #8b949e; flex-grow: 1; }
-        .card-footer {
-            margin-top: auto; font-size: 0.75rem; color: #58a6ff;
-            font-family: 'Consolas', monospace; background: rgba(88, 166, 255, 0.1);
-            padding: 4px 8px; border-radius: 4px; align-self: flex-start;
+        .kanban-card:hover { border-color: var(--primary); background: #2c333a; }
+        
+        .card-tag { height: 4px; width: 40px; border-radius: 4px; background: #eb5a46; margin-bottom: 6px; }
+        .card-name { color: #dcdfe4; font-weight: 500; font-size: 0.9rem; margin-bottom: 4px; }
+        .card-file { color: #8c9bab; font-size: 0.75rem; font-family: monospace; }
+        
+        .card-delete-btn {
+            position: absolute; top: 5px; right: 5px;
+            opacity: 0; color: #6b778c; font-size: 14px;
+            padding: 2px 6px; border-radius: 3px; background: rgba(0,0,0,0.5);
         }
-        .delete-btn {
-            position: absolute; top: 10px; right: 10px; background: transparent;
-            border: none; color: #484f58; font-size: 1.2rem; cursor: pointer; transition: 0.2s;
-        }
-        .delete-btn:hover { color: var(--danger); }
+        .kanban-card:hover .card-delete-btn { opacity: 1; }
+        .card-delete-btn:hover { color: var(--danger); background: rgba(0,0,0,0.8); }
 
-        /* MODAL GERAL */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; visibility: hidden; transition: 0.2s; z-index: 1000;
+        .add-card-btn {
+            margin: 0 8px 8px 8px;
+            padding: 8px;
+            border-radius: 4px;
+            color: #9fadbc;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.9rem;
         }
+        .add-card-btn:hover { background-color: rgba(255,255,255,0.1); color: #fff; }
+
+        /* MODALS (MESMO ESTILO ANTERIOR) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: 0.2s; z-index: 1000; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-
-        /* MODAL ADD SCRIPT */
-        .modal-small {
-            background: var(--modal-bg); width: 400px; padding: 25px;
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            display: flex; flex-direction: column; gap: 15px; transform: scale(0.9); transition: 0.3s;
-        }
+        
+        .modal-small { background: var(--modal-bg); width: 400px; padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 15px; transform: scale(0.9); transition: 0.3s; }
         .modal-overlay.active .modal-small { transform: scale(1); }
 
-        input {
-            background: #0d1117; border: 1px solid #30363d;
-            padding: 12px; border-radius: 6px; color: #fff; outline: none; font-family: 'Inter', sans-serif;
-        }
-        input:focus { border-color: var(--primary); }
-
-        /* MODAL TERMINAL */
-        .modal-large {
-            background: var(--modal-bg); width: 95%; max-width: 1200px; height: 90vh;
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            display: flex; flex-direction: column; overflow: hidden;
-            transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+        .modal-large { background: var(--modal-bg); width: 95%; max-width: 1200px; height: 90vh; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: 0.3s; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         .modal-overlay.active .modal-large { transform: scale(1); }
 
-        .term-header {
-            padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d;
-            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
-        }
-        .term-title { font-weight: 600; color: #fff; }
-        .btn-close { background: none; border: none; color: #8b949e; font-size: 1.5rem; cursor: pointer; }
-        .btn-close:hover { color: #fff; }
+        /* Form Styles */
+        input { background: #0d1117; border: 1px solid #30363d; padding: 12px; border-radius: 6px; color: #fff; outline: none; font-family: 'Inter', sans-serif; }
+        input:focus { border-color: var(--primary); }
+        .btn-primary { background: var(--primary); color: #0d1117; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-close-modal { background: none; border: none; color: #aaa; font-size: 1.2rem; cursor: pointer; float: right; }
 
-        /* CORREÇÃO VISUAL DO TERMINAL 
-           - Usa fonte Consolas para alinhamento perfeito.
-           - white-space: pre-wrap mantém formatação original.
-        */
-        .term-body {
-            flex-grow: 1; 
-            padding: 20px; 
-            overflow-y: auto;
-            background: var(--terminal-bg); 
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Essencial para alinhar tabelas */
-            font-size: 14px; /* Tamanho legível */
-            line-height: 1.2; /* Espaçamento de terminal */
-            color: #c9d1d9;
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-        }
-        
-        .term-body::-webkit-scrollbar { width: 12px; }
-        .term-body::-webkit-scrollbar-track { background: #0d1117; }
-        .term-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 6px; }
+        /* TERMINAL */
+        .term-header { padding: 15px 20px; background: #161b22; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .term-body { flex-grow: 1; padding: 20px; overflow-y: auto; background: var(--terminal-bg); font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.2; color: #c9d1d9; white-space: pre-wrap; word-wrap: break-word; }
+        .term-footer { padding: 15px 20px; background: #161b22; border-top: 1px solid #30363d; display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+        .prompt { color: var(--success); font-weight: bold; }
+        #cmdInput { flex-grow: 1; background: transparent; border: none; padding: 0; font-family: 'Consolas', monospace; color: #fff; font-size: 1rem; }
+        .btn-stop { background: var(--danger); color: #fff; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; }
 
-        .term-footer {
-            padding: 15px 20px; background: #161b22; border-top: 1px solid #30363d;
-            display: flex; gap: 10px; align-items: center; flex-shrink: 0;
-        }
-        .prompt { color: var(--success); font-weight: bold; font-family: monospace; font-size: 1.1rem;}
-        #cmdInput { 
-            flex-grow: 1; background: transparent; border: none; padding: 0; 
-            font-family: 'Consolas', monospace; color: #fff; font-size: 1rem; 
-        }
-        
-        .btn-stop {
-            background: var(--danger); color: #fff; border: none;
-            padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;
-        }
-        .btn-stop:hover { opacity: 0.9; }
+        /* ANSI Colors */
+        .ansi-red { color: #ff7b72; font-weight: bold; } .ansi-green { color: #3fb950; font-weight: bold; } .ansi-yellow { color: #d29922; } .ansi-blue { color: #58a6ff; } .ansi-magenta { color: #bc8cff; } .ansi-cyan { color: #39c5cf; } .ansi-bold { font-weight: bold; color: #fff; } .user-echo { color: #fff; font-weight: bold; margin: 5px 0; }
 
-        /* CONFIRM MODAL */
-        .modal-confirm {
-            background: #1c1c1c; border: 1px solid #444; width: 300px; padding: 20px;
-            border-radius: 8px; text-align: center; display: none;
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
+        /* Confirm Modal */
+        .modal-confirm { background: #1c1c1c; border: 1px solid #444; width: 300px; padding: 20px; border-radius: 8px; text-align: center; display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         .modal-confirm.active { display: block; }
-        .modal-confirm h3 { margin-top: 0; color: #fff; }
-        .modal-confirm p { color: #ccc; font-size: 0.9rem; }
-        .confirm-actions { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
-        .btn-yes { background: var(--danger); color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
-        .btn-no { background: #444; color: #fff; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; }
-
-        /* Helper para mensagem digitada pelo usuário no log */
-        .user-echo { color: #fff; font-weight: bold; margin-top: 5px; }
-
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Python Script Runner</h1>
-        <button class="add-btn-header" onclick="openAddModal()">+ Novo Script</button>
+        <h1>🚀 MVNO Python Runner</h1>
+        <button class="header-btn" onclick="addNewColumn()">+ Add Lista</button>
     </div>
 
-    <div class="main-container">
-        <div id="cardsContainer" class="grid-cards"></div>
-        <div id="emptyState" style="text-align:center; color:#666; margin-top:50px; display:none;">
-            Nenhum script. Adicione um para começar.
+    <div class="board-container" id="board">
         </div>
-    </div>
 
-    <div class="modal-overlay" id="modalAdd">
+    <div class="modal-overlay" id="modalAddCard">
         <div class="modal-small">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="margin:0; color:#fff;">Novo Script</h2>
-                <button class="btn-close" onclick="closeModal('modalAdd')">×</button>
+            <div><h2 style="margin:0; color:#fff; display:inline;">Novo Script</h2><button class="btn-close-modal" onclick="closeModal('modalAddCard')">×</button></div>
+            <input type="hidden" id="targetColId">
+            <input type="text" id="newCardTitle" placeholder="Título (Ex: Automação X)">
+            <input type="text" id="newCardFile" placeholder="Arquivo (Ex: script.py)">
+            <div style="display:flex; gap:5px;">
+                <div style="flex:1; height:30px; background:#eb5a46; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#eb5a46')" class="color-opt selected"></div>
+                <div style="flex:1; height:30px; background:#f2d600; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#f2d600')" class="color-opt"></div>
+                <div style="flex:1; height:30px; background:#61bd4f; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#61bd4f')" class="color-opt"></div>
+                <div style="flex:1; height:30px; background:#0079bf; border-radius:4px; cursor:pointer; border:2px solid transparent;" onclick="selectColor(this, '#0079bf')" class="color-opt"></div>
             </div>
-            <input type="text" id="newTitle" placeholder="Título (ex: Validador CEP)">
-            <input type="text" id="newDesc" placeholder="Descrição (ex: Verifica base de dados)">
-            <input type="text" id="newFile" placeholder="Arquivo (ex: script.py)">
-            <button class="add-btn-header" style="width:100%" onclick="saveScript()">Salvar</button>
+            <button class="btn-primary" onclick="saveCard()">Adicionar</button>
         </div>
     </div>
 
@@ -200,188 +199,237 @@
         <div class="modal-large">
             <div class="term-header">
                 <div class="term-title" id="termTitle">Terminal</div>
-                <button class="btn-close" onclick="tryCloseTerminal()">×</button>
+                <button class="btn-close-modal" onclick="tryCloseTerminal()">×</button>
             </div>
             <div class="term-body" id="termOutput"></div>
             <div class="term-footer">
                 <span class="prompt">>></span>
                 <input type="text" id="cmdInput" placeholder="Digite aqui..." autocomplete="off">
-                <button class="btn-stop" id="btnStop" onclick="stopScript()">PARAR</button>
+                <button class="btn-stop" onclick="stopScript()">PARAR</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="confirmOverlay" style="z-index: 1500; background: rgba(0,0,0,0.6);">
         <div class="modal-confirm active">
-            <h3>⚠️ Execução em Andamento</h3>
-            <p>Deseja realmente interromper o script?</p>
-            <div class="confirm-actions">
-                <button class="btn-no" onclick="closeConfirm()">Não</button>
-                <button class="btn-yes" onclick="forceCloseTerminal()">Sim, Parar</button>
+            <h3 style="color:#fff; margin:0;">Execução em Andamento</h3>
+            <p style="color:#aaa;">Deseja interromper?</p>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+                <button class="header-btn" onclick="document.getElementById('confirmOverlay').classList.remove('active')">Não</button>
+                <button class="btn-stop" onclick="forceCloseTerminal()">Sim, Parar</button>
             </div>
         </div>
     </div>
 
     <script>
+        // --- DADOS E ESTADO ---
         const BASE_URL = 'http://localhost:5000/api';
+        let boardData = JSON.parse(localStorage.getItem('kanbanData')) || {
+            columns: [
+                { id: 'col-1', title: 'Fluxo PS8', cards: [ 
+                    { id: 'c1', title: 'Novo Cadastro PS8', file: 'ps8_auto_insert_cancel.py', color: '#f2d600' },
+                    { id: 'c2', title: 'Cancelamento', file: 'ps8_auto_insert_cancel.py', color: '#eb5a46' } 
+                ]},
+                { id: 'col-2', title: 'Fluxo SPS', cards: [
+                    { id: 'c3', title: 'SPS Active', file: 'tr_active_sps 4.py', color: '#61bd4f' },
+                    { id: 'c4', title: 'SPS Change', file: 'tr_sps_change 2 1.py', color: '#0079bf' }
+                ]}
+            ]
+        };
+        
+        let selectedColor = '#eb5a46';
         let streamReader = null;
         let isRunning = false;
-        const ansi_up = new AnsiUp(); // Inicializa a biblioteca de cores ANSI
+        const ansi_up = new AnsiUp();
 
-        // --- CARDS & STORAGE ---
-        function loadScripts() {
-            const container = document.getElementById('cardsContainer');
-            const empty = document.getElementById('emptyState');
-            const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
+        // --- RENDERIZAÇÃO ---
+        function renderBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
 
-            container.innerHTML = '';
-            if (scripts.length === 0) { empty.style.display = 'block'; return; }
-            empty.style.display = 'none';
-
-            scripts.forEach((script, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = (e) => { if(!e.target.classList.contains('delete-btn')) runScript(script); };
-                card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteScript(${index})">×</button>
-                    <div class="card-tag"></div>
-                    <h3>${script.title}</h3>
-                    <p>${script.desc}</p>
-                    <div class="card-footer">📄 ${script.file}</div>
+            boardData.columns.forEach(col => {
+                // Cria Coluna
+                const colEl = document.createElement('div');
+                colEl.className = 'column';
+                colEl.dataset.colId = col.id;
+                colEl.innerHTML = `
+                    <div class="column-header">
+                        <input class="column-title" value="${col.title}" onchange="updateColTitle('${col.id}', this.value)">
+                        <span class="delete-col-btn" onclick="deleteColumn('${col.id}')">×</span>
+                    </div>
+                    <div class="card-list" id="${col.id}"></div>
+                    <div class="add-card-btn" onclick="openAddCardModal('${col.id}')">+ Adicionar um cartão</div>
                 `;
-                container.appendChild(card);
+
+                const listEl = colEl.querySelector('.card-list');
+                
+                // Cria Cards
+                col.cards.forEach(card => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = 'kanban-card';
+                    cardEl.dataset.cardId = card.id;
+                    cardEl.onclick = (e) => { if(!e.target.classList.contains('card-delete-btn')) runScript(card.title, card.file); };
+                    cardEl.innerHTML = `
+                        <div class="card-delete-btn" onclick="deleteCard('${col.id}', '${card.id}')">✕</div>
+                        <div class="card-tag" style="background:${card.color}"></div>
+                        <div class="card-name">${card.title}</div>
+                        <div class="card-file">📄 ${card.file}</div>
+                    `;
+                    listEl.appendChild(cardEl);
+                });
+
+                // Inicializa Drag & Drop na Lista de Cards
+                new Sortable(listEl, {
+                    group: 'shared', // Permite mover entre colunas
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function (evt) {
+                        moveCard(evt.from.id, evt.to.id, evt.oldIndex, evt.newIndex);
+                    }
+                });
+
+                board.appendChild(colEl);
+            });
+
+            // Inicializa Drag & Drop nas Colunas
+            new Sortable(board, {
+                animation: 150,
+                handle: '.column-header',
+                onEnd: function (evt) {
+                    moveColumn(evt.oldIndex, evt.newIndex);
+                }
             });
         }
 
-        function saveScript() {
-            const title = document.getElementById('newTitle').value;
-            const desc = document.getElementById('newDesc').value;
-            const file = document.getElementById('newFile').value.trim();
-            if(!title || !file) return alert("Preencha Título e Arquivo");
-            
-            const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
-            scripts.push({ title, desc, file });
-            localStorage.setItem('myScripts', JSON.stringify(scripts));
-            
-            document.getElementById('newTitle').value = ''; document.getElementById('newDesc').value = ''; document.getElementById('newFile').value = '';
-            closeModal('modalAdd');
-            loadScripts();
+        // --- CRUD KANBAN ---
+        function saveData() {
+            localStorage.setItem('kanbanData', JSON.stringify(boardData));
         }
 
-        function deleteScript(index) {
-            if(confirm("Remover script?")) {
-                const scripts = JSON.parse(localStorage.getItem('myScripts') || '[]');
-                scripts.splice(index, 1);
-                localStorage.setItem('myScripts', JSON.stringify(scripts));
-                loadScripts();
+        function moveCard(fromColId, toColId, oldIndex, newIndex) {
+            const fromCol = boardData.columns.find(c => c.id === fromColId);
+            const toCol = boardData.columns.find(c => c.id === toColId);
+            const [movedCard] = fromCol.cards.splice(oldIndex, 1);
+            toCol.cards.splice(newIndex, 0, movedCard);
+            saveData();
+        }
+
+        function moveColumn(oldIndex, newIndex) {
+            const [movedCol] = boardData.columns.splice(oldIndex, 1);
+            boardData.columns.splice(newIndex, 0, movedCol);
+            saveData();
+        }
+
+        function updateColTitle(colId, newTitle) {
+            const col = boardData.columns.find(c => c.id === colId);
+            col.title = newTitle;
+            saveData();
+        }
+
+        function addNewColumn() {
+            const title = prompt("Nome da Lista:");
+            if(title) {
+                boardData.columns.push({ id: 'col-' + Date.now(), title: title, cards: [] });
+                saveData(); renderBoard();
             }
         }
 
-        // --- TERMINAL LOGIC ---
-        function runScript(script) {
-            document.getElementById('modalTerm').classList.add('active');
-            document.getElementById('termTitle').innerText = `Executando: ${script.title}`;
-            const term = document.getElementById('termOutput');
-            term.innerHTML = '<div style="color:#8b949e">Conectando ao terminal...</div>';
+        function deleteColumn(colId) {
+            if(confirm("Deletar lista e todos os cards?")) {
+                boardData.columns = boardData.columns.filter(c => c.id !== colId);
+                saveData(); renderBoard();
+            }
+        }
+
+        function openAddCardModal(colId) {
+            document.getElementById('targetColId').value = colId;
+            document.getElementById('newCardTitle').value = '';
+            document.getElementById('newCardFile').value = '';
+            document.getElementById('modalAddCard').classList.add('active');
+        }
+
+        function selectColor(el, color) {
+            document.querySelectorAll('.color-opt').forEach(d => d.style.border = '2px solid transparent');
+            el.style.border = '2px solid #fff';
+            selectedColor = color;
+        }
+
+        function saveCard() {
+            const colId = document.getElementById('targetColId').value;
+            const title = document.getElementById('newCardTitle').value;
+            const file = document.getElementById('newCardFile').value;
             
-            startStream(script.file);
+            if(!title || !file) return alert("Preencha tudo!");
+            
+            const col = boardData.columns.find(c => c.id === colId);
+            col.cards.push({ id: 'card-' + Date.now(), title, file, color: selectedColor });
+            saveData(); renderBoard(); closeModal('modalAddCard');
+        }
+
+        function deleteCard(colId, cardId) {
+            if(confirm("Deletar card?")) {
+                const col = boardData.columns.find(c => c.id === colId);
+                col.cards = col.cards.filter(c => c.id !== cardId);
+                saveData(); renderBoard();
+            }
+        }
+
+        // --- TERMINAL & EXECUÇÃO ---
+        function runScript(title, filename) {
+            document.getElementById('modalTerm').classList.add('active');
+            document.getElementById('termTitle').innerText = `> ${title} (${filename})`;
+            const term = document.getElementById('termOutput');
+            term.innerHTML = '<div style="color:#8b949e">Iniciando conexão...</div>';
+            
+            startStream(filename);
             setTimeout(() => document.getElementById('cmdInput').focus(), 500);
         }
 
         async function startStream(filename) {
             const term = document.getElementById('termOutput');
             isRunning = true;
-
             try {
                 const response = await fetch(`${BASE_URL}/run_script`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ script_name: filename })
                 });
-
                 streamReader = response.body.getReader();
                 const decoder = new TextDecoder();
-
                 while(true) {
-                    const { done, value } = await streamReader.read();
-                    if (done) break;
-                    
+                    const {done, value} = await streamReader.read();
+                    if(done) break;
                     const chunk = decoder.decode(value, {stream: true});
-                    
-                    // Aqui usamos a biblioteca ansi_up para converter as cores do Python para HTML real
-                    const htmlChunk = ansi_up.ansi_to_html(chunk);
-                    
-                    // Append no innerHTML
-                    term.innerHTML += htmlChunk;
+                    // Converte ANSI para HTML
+                    term.innerHTML += ansi_up.ansi_to_html(chunk);
                     term.scrollTop = term.scrollHeight;
                 }
-            } catch (e) {
-                term.innerHTML += `<div style="color:#ff7b72">\nErro: ${e.message}</div>`;
-            } finally {
-                isRunning = false;
-                term.innerHTML += `<div style="color:#8b949e; margin-top:10px;">--- PROCESSO FINALIZADO ---</div>`;
-                term.scrollTop = term.scrollHeight;
-            }
+            } catch (e) { term.innerHTML += `<div class="ansi-red">\nErro: ${e.message}</div>`; }
+            finally { isRunning = false; term.innerHTML += `<div style="color:#8b949e; margin-top:10px;">--- FIM ---</div>`; term.scrollTop = term.scrollHeight; }
         }
 
-        // Envia o que o usuário digita para o Python
         document.getElementById('cmdInput').addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && isRunning) {
-                const val = e.target.value;
-                e.target.value = '';
-                
-                // Mostra visualmente o que foi digitado
+                const val = e.target.value; e.target.value = '';
                 const term = document.getElementById('termOutput');
-                term.innerHTML += `<div class="user-echo">${val}</div>`;
-                term.scrollTop = term.scrollHeight;
-
-                await fetch(`${BASE_URL}/send_input`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ input: val })
-                });
+                term.innerHTML += `<div class="user-echo">${val}</div>`; term.scrollTop = term.scrollHeight;
+                await fetch(`${BASE_URL}/send_input`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ input: val }) });
             }
         });
 
         async function stopScript() {
             if(streamReader) await streamReader.cancel();
             await fetch(`${BASE_URL}/stop_script`, { method: 'POST' });
-            document.getElementById('termOutput').innerHTML += `<div style="color:#f85149">\n>>> INTERROMPIDO PELO USUÁRIO</div>`;
+            document.getElementById('termOutput').innerHTML += `<div style="color:#ff4d4d">\n>>> INTERROMPIDO PELO USUÁRIO</div>`;
             isRunning = false;
         }
 
-        // --- CONTROLES DE FECHAR ---
-        function openAddModal() { document.getElementById('modalAdd').classList.add('active'); }
+        // --- UTIL ---
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        
-        // Tentativa de fechar terminal
-        function tryCloseTerminal() {
-            if (isRunning) {
-                document.getElementById('confirmOverlay').classList.add('active');
-            } else {
-                closeModal('modalTerm');
-            }
-        }
+        function tryCloseTerminal() { if(isRunning) document.getElementById('confirmOverlay').classList.add('active'); else closeModal('modalTerm'); }
+        async function forceCloseTerminal() { document.getElementById('confirmOverlay').classList.remove('active'); await stopScript(); closeModal('modalTerm'); }
 
-        // Fecha modal de confirmação
-        function closeConfirm() {
-            document.getElementById('confirmOverlay').classList.remove('active');
-        }
-
-        // Força o fechamento (Botão Sim)
-        async function forceCloseTerminal() {
-            closeConfirm();
-            await stopScript();
-            closeModal('modalTerm');
-        }
-
-        // Clique fora do terminal
-        document.getElementById('modalTerm').addEventListener('click', (e) => {
-            if(e.target.id === 'modalTerm') tryCloseTerminal();
-        });
-
-        // Inicialização
-        document.getElementById('confirmOverlay').classList.remove('active'); // Garante oculto ao iniciar
-        loadScripts();
-
+        document.getElementById('confirmOverlay').classList.remove('active'); // Init
+        renderBoard(); // Init Kanban
     </script>
 </body>
 </html>
